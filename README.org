@@ -1,0 +1,14 @@
+* CSE 551 Project
+** Project for Fundamentals of Algorithms written in Clojure
+
+** Requirements:
+
+   Implement the following algorithms from the paper "udget Constrained Relay node Place-ment with Minimum Number of Connected Component" (See `papers` directory)
+
+*** Relay Node Placement Problem with Mini-mum Number of Connected Components
+
+    Algorithm 4 in paper.
+
+*** Relay Node Placement Problem for Maximiz-ing the Largest Connected Component
+
+    Algorithm 5 in paper.
