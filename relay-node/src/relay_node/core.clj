@@ -133,23 +133,34 @@
     (unique-edges ,,,)
     (sort #(compare (edge-weight graph %1) (edge-weight graph %2)) ,,,)))
 
+;; (defn add-edge-with-attrs
+;;   "Adds an edge to the graph with the attributes provided."
+;;   [graph edge attrs]
+;;   (-> graph
+;;     (uber/add-edges* (vector edge))
+;;     (uber/add-attrs edge attrs)))
+
+(defn edge-canonical-form
+  [g edge]
+  ((juxt :src :dest #(uber/attrs g %)) edge))
+
 (defn minimum-spanning-tree
   "Takes a `uber/graph` and returns an `uber/graph` that is its minimum spanning tree.
   Implementation of Kruskal's algorithm."
   [graph]
-  (let [disj-set (ds-from (uber/nodes graph))
-        edges    (sorted-edges graph)]
-    (apply uber/graph (reduce (fn [acc {:keys [src dest]
-                                        :as   edge}]
-                                (with-disj-set disj-set
-                                  (if (ds-shared-root? src dest)
-                                    (do
-                                      (ds-union src dest)
-                                      ;; Note this doesn't also include the properties of the node.
-                                      (conj acc [src dest {:length (edge-value graph edge :length)}]))
-                                    acc)))
-                              '()
-                              edges))))
+  (let [disj-set    (ds-from (uber/nodes graph))
+        edges       (sorted-edges graph)
+        empty-graph (uber/remove-edges* graph (uber/edges graph))]
+    (reduce (fn [acc {:keys [src dest]
+                      :as   edge}]
+              (with-disj-set disj-set
+                (if (ds-shared-root? src dest)
+                  (do
+                    (ds-union src dest)
+                    (uber/add-edges* acc [(edge-canonical-form graph edge)]))
+                  acc)))
+            empty-graph
+            edges)))
 
 ;; NOTE : Above algorithm doesn't work. Run:
 ;;   (def test1 (rand-full-graph 3 10))
@@ -179,7 +190,8 @@
                                (uber/edges mst)))]
     ;; Set each edge weight to ceil( length(e) / R ) - 1
     (while (> (reduce + (map (fn [edge] (edge-value @weighted edge :weight)) (uber/edges @weighted))) budget)
-      (swap! weighted uber/remove-edges
+      (swap! weighted uber/remove-edges*
+             @weighted
              (vector
                (max-key
                  (fn [x] (edge-value @weighted x :weight))
@@ -189,5 +201,3 @@
   " Read in graphs and run algorithms. "
   [& args]
   (println "Hello, World!"))
-
-(ubergraph.core/)
