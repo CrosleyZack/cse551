@@ -3,6 +3,13 @@
   (:require [ubergraph.core :as uber]
             [clojure.math.combinatorics :as combo]))
 
+;;; Non-domain utility functions.
+
+(defn print-lines
+  [& lines]
+  (doseq [line lines]
+    (apply println line)))
+
 ;;; Generate a random graph for testing ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn nodes
@@ -53,22 +60,24 @@
         edges    (sorted-edges graph)]
     (reduce (fn [[main-s node-sets] edge]
               (do
-                (println)
-                (println "Main Set : " main-s)
-                (println "Sets for each node : " node-sets)
-                (println "Edge : " edge)
+                (print-lines
+                  []
+                  ["main set : " main-s]
+                  ["sets for each node : " node-sets]
+                  ["edge : " edge])
                 (let [src     (:src edge)
                       dst     (:dest edge)
                       src-set (get node-sets src)
                       dst-set (get node-sets dst)
                       union   (clojure.set/union src-set dst-set)]
                   (do
-                    (println)
-                    (println "Source : " src)
-                    (println "Dest : " dst)
-                    (println "Source Set : " src-set)
-                    (println "Dest Set : " dst-set)
-                    (println "Set Union : " union)))))
+                    (print-lines
+                      []
+                      ["Source : " src]
+                      ["Dest : " dst]
+                      ["Source Set : " src-set]
+                      ["Dest Set : " dst-set]
+                      ["Set Union : " union])))))
             [main-set sets]
             edges)))
 
