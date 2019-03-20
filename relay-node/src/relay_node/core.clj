@@ -1,6 +1,7 @@
 (ns relay-node.core
   (:gen-class)
-  (:require [ubergraph.core :as uber]))
+  (:require [ubergraph.core :as uber]
+            [clojure.math.combinatorics :as combo]))
 
 ;;; Generate a random graph for testing ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
