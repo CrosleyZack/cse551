@@ -67,8 +67,8 @@
   "Takes a `uber/graph` and returns an `uber/graph` that is its minimum spanning tree.
   Implementation of Kruskal's algorithm."
   [graph]
-  (let [main-set set
-        sets     (zipmap (uber/nodes graph) (repeat set))
+  (let [main-set #{}
+        sets     (zipmap (uber/nodes graph) (repeat #{}))
         edges    (sorted-edges graph)]
     (reduce (fn [[main-s node-sets] edge]
               (do
@@ -80,7 +80,7 @@
                       dst     (:dest edge)
                       src-set (get node-sets src)
                       dst-set (get node-sets dst)
-                      union   (clojure.set/union src-set dst-set)] ; Fails here. Not sure why.
+                      union   (clojure.set/union src-set dst-set)]
                   (do
                     (println)
                     (println "Source : " src)
@@ -88,7 +88,7 @@
                     (println "Source Set : " src-set)
                     (println "Dest Set : " dst-set)
                     (println "Set Union : " union)))))
-            (conj [] main-set sets)
+            [main-set sets]
             edges)))
 
 ;;; IO Functions ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
