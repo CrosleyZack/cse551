@@ -98,27 +98,18 @@
   "Takes a `uber/graph` and returns an `uber/graph` that is its minimum spanning tree.
   Implementation of Kruskal's algorithm."
   [graph]
-  (let [main-set #{}
-        sets     (zipmap (uber/nodes graph) (repeat #{}))
+  (let [disj-set (atom (apply uf/union-find (uber/nodes graph)))
         edges    (sorted-edges graph)]
-    (reduce (fn [[main-s node-sets] edge]
-              (let [src     (:src edge)
-                    dst     (:dest edge)
-                    src-set (get node-sets src)
-                    dst-set (get node-sets dst)
-                    union   (clojure.set/union src-set dst-set)]
-                (print-lines
-                  []
-                  ["main set : " main-s]
-                  ["sets for each node : " node-sets]
-                  ["edge : " edge]
-                  []
-                  ["Source : " src]
-                  ["Dest : " dst]
-                  ["Source Set : " src-set]
-                  ["Dest Set : " dst-set]
-                  ["Set Union : " union])))
-            [main-set sets]
+    (reduce (fn [acc edge]
+              (let [src (:src edge)
+                    dst (:dest edge)]
+                (with-disj-set disj-set
+                  (if (ds-shared-root? src dst)
+                    (do
+                      (ds-union src dst)
+                      (conj acc edge))
+                    acc))))
+            #{}
             edges)))
 
 ;;; IO Functions ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
