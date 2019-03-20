@@ -1,7 +1,8 @@
 (ns relay-node.core
   (:gen-class)
   (:require [ubergraph.core :as uber]
-            [clojure.math.combinatorics :as combo]))
+            [clojure.math.combinatorics :as combo]
+            [jordanlewis.data.union-find :as uf]))
 
 ;;; Non-domain utility functions.
 
@@ -33,6 +34,48 @@
                           (repeat 2 allnodes))))))
 
 ;;; Utility functions ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn ds-get-canonical
+  "Perform the get-canonical operation on a disjoint set but update
+  the atom-backed representation as well to take advantage of path
+  compression."
+  [disj-set-atom val]
+  (let [[new-repr res] (uf/get-canonical @disj-set-atom val)]
+    (reset! disj-set-atom new-repr)
+    val))
+
+(defn ds-union
+  "Perform the union operation on a disjoint set but update the
+  atom-backed representation as well. Could simply be a reset! call
+  but this mirrors atom-uf-get-canonical above which /does/ require
+  more involved handling."
+  [disj-set-atom u v]
+  (swap! disj-set-atom uf/union u v))
+
+(defn ds-shared-root?
+  "Check if the provided elements share a root in the given disjoint
+  set, updating internal representation transparently."
+  [disj-set-atom u v]
+  (not= (ds-get-canonical disj-set-atom u)
+        (ds-get-canonical disj-set-atom v)))
+
+(defmacro with-disj-set
+  "Rebind the prior three functions to themselves partially applied
+  to the given disjoint set. Crucially, do this lexically, not for
+  all subsequent calls as that would break ds-shared-root?.
+
+  e.g. (with-disj-set foo (ds-union :a :b)) is effectively:
+       (let [ds-get-canonical (partial ds-get-canonical foo)
+             ds-shared-root?  (partial ds-shared-root? foo)
+             ds-union         (partial ds-union foo)]
+         (ds-union :a :b))"
+  [disj-set-atom & body]
+  `(let [~@(mapcat #(conj [%]
+                          `(partial ~% ~disj-set-atom))
+                   '[ds-get-canonical
+                     ds-shared-root?
+                     ds-union])]
+     ~@body))
 
 (defn unique-edges
   [graph]
