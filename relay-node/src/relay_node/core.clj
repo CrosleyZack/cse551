@@ -105,15 +105,14 @@
   [graph]
   (let [disj-set (ds-from (uber/nodes graph))
         edges    (sorted-edges graph)]
-    (reduce (fn [acc edge]
-              (let [src (:src edge)
-                    dst (:dest edge)]
-                (with-disj-set disj-set
-                  (if (ds-shared-root? src dst)
-                    (do
-                      (ds-union src dst)
-                      (conj acc edge))
-                    acc))))
+    (reduce (fn [acc {:keys [src dest]
+                      :as   edge}]
+              (with-disj-set disj-set
+                (if (ds-shared-root? src dest)
+                  (do
+                    (ds-union src dest)
+                    (conj acc edge))
+                  acc)))
             #{}
             edges)))
 
