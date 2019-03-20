@@ -8,7 +8,7 @@
 (defn nodes
   "Takes an `int` number of nodes (or uses a default 26) and returns the sequence of node names."
   ([]
-   (nodes [26]))
+   (nodes 26))
   ([n]
    (map keyword
         (map (comp str char)
