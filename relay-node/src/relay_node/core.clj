@@ -59,25 +59,22 @@
         sets     (zipmap (uber/nodes graph) (repeat #{}))
         edges    (sorted-edges graph)]
     (reduce (fn [[main-s node-sets] edge]
-              (do
+              (let [src     (:src edge)
+                    dst     (:dest edge)
+                    src-set (get node-sets src)
+                    dst-set (get node-sets dst)
+                    union   (clojure.set/union src-set dst-set)]
                 (print-lines
                   []
                   ["main set : " main-s]
                   ["sets for each node : " node-sets]
-                  ["edge : " edge])
-                (let [src     (:src edge)
-                      dst     (:dest edge)
-                      src-set (get node-sets src)
-                      dst-set (get node-sets dst)
-                      union   (clojure.set/union src-set dst-set)]
-                  (do
-                    (print-lines
-                      []
-                      ["Source : " src]
-                      ["Dest : " dst]
-                      ["Source Set : " src-set]
-                      ["Dest Set : " dst-set]
-                      ["Set Union : " union])))))
+                  ["edge : " edge]
+                  []
+                  ["Source : " src]
+                  ["Dest : " dst]
+                  ["Source Set : " src-set]
+                  ["Dest Set : " dst-set]
+                  ["Set Union : " union])))
             [main-set sets]
             edges)))
 
