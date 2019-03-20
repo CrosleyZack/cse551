@@ -38,30 +38,11 @@
   (:weight (uber/attrs graph [(:src edge) (:dest edge)])))
 
 (defn sorted-edges
-   "Given a graph, returns it edges sorted in increasing order."
-   [graph]
-   (->> graph
-        (unique-edges ,,,)
-        (sort #(compare (edge-weight graph %1) (edge-weight graph %2)) ,,,)))
-
-(defn minimum-spanning-tree
-  "Takes a `uber/graph` and returns an `uber/graph` that is its minimum spanning tree.
-  Implementation of Kruskal's algorithm."
+  "Given a graph, returns it edges sorted in increasing order."
   [graph]
-  (let [main-set set
-        sets (zipmap (uber/nodes graph) (repeat set))
-        edges (sorted-edges graph)]
-    (reduce (fn [[main-s node-sets] edge]
-              (let [src (:src edge)
-                    dst (:dest edge)
-                    src-set (get node-sets src)
-                    dst-set (get node-sets dst)
-                    union (clojure.set/union src-set dst-set)]
-                (if (not (= src-set dst-set))
-                  (conj '() (conj main-s edge) (assoc node-sets src union dst union))
-                  (conj '() main-s node-sets))))
-            (conj '() main-set sets)
-            edges)))
+  (->> graph
+    (unique-edges ,,,)
+    (sort #(compare (edge-weight graph %1) (edge-weight graph %2)) ,,,)))
 
 (defn minimum-spanning-tree
   "Takes a `uber/graph` and returns an `uber/graph` that is its minimum spanning tree.
