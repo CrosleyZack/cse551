@@ -14,7 +14,7 @@
 ;;; Generate a random graph for testing ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn nodes
-  "Takes an `int` number of nodes (or uses a default 26) and returns the sequence of node names."
+  "Returns node names for `int` number of nodes, default 26."
   ([]
    (nodes 26))
   ([n]
@@ -23,21 +23,45 @@
 
 (defn get-edges
   "Retrieves the edges that exist in a fully connected graph with the set of nodes.
-  Removes self referencial nodes"
+  Removes self referencial nodes."
   [nodes]
   (filter (fn [[src dst]] (not (= src dst)))
           (apply combo/cartesian-product
                  (repeat 2 nodes))))
 
-;; Creates a random, fully connected graph with `int` num-nodes nodes and `int` max-weight per edge.
+(defn randomly-locate-nodes
+  "Get a dictionary mapping each node to an (x,y,z) location."
+  [allnodes max-coord]
+  (reduce (fn [acc node]
+            (assoc acc
+                   node {:x (rand-int max-coord)
+                         :y (rand-int max-coord)
+                         :z (rand-int max-coord)}))
+          {}
+          allnodes))
+
+(defn lp-distance
+  "Takes two number sequences of equal lenght and produces the euclidean distance"
+  ([point1 point2]
+   (lp-distance point1 point2 2))
+  ([point1 point2 pow]
+   (reduce (fn [acc [x, y]]
+             (+ acc (Math/pow (- x y) 2)))
+           0
+           (map vector point1 point2))))
+
 (defn rand-full-graph
-  [num-nodes max-weight]
-  (let [allnodes (nodes num-nodes)]
+  "Create fully connected, random graph with random locations for each node and euclidean graph weights"
+  [num-nodes max-coord]
+  (let [allnodes      (nodes num-nodes)
+        node-locs     (randomly-locate-nodes allnodes max-coord)
+        located-nodes (map (fn [x] (conj [] x (get node-locs x))) allnodes)]
     (apply uber/graph
            (reduce (fn [prev [src dst]]
                      (conj prev
-                           [src dst (rand-int max-weight)]))
-                   '()
+                           [src dst
+                            (lp-distance (vals (get node-locs src)) (vals (get node-locs dst)))]))
+                   located-nodes
                    (get-edges allnodes)))))
 
 ;;; Utility functions ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -114,16 +138,22 @@
   (let [disj-set (ds-from (uber/nodes graph))
         edges    (sorted-edges graph)]
     (apply uber/graph (reduce (fn [acc {:keys [src dest]
-                                  :as   edge}]
-                          (with-disj-set disj-set
-                            (if (ds-shared-root? src dest)
-                              (do
-                                (ds-union src dest)
-                                (conj acc [src dest (edge-weight graph edge)]))
-                              acc)))
-                        '()
-                        edges))))
+                                        :as   edge}]
+                                (with-disj-set disj-set
+                                  (if (ds-shared-root? src dest)
+                                    (do
+                                      (ds-union src dest)
+                                      (conj acc [src dest (edge-weight graph edge)]))
+                                    acc)))
+                              '()
+                              edges))))
 
+;; NOTE : Above algorithm doesn't work. Run:
+;;   (def test1 (rand-full-graph 3 10))
+;;   (uber/pprint test1)
+;;   (def test2 (minimum-spanning-tree test1))
+;;   (uber/pprint test2)
+;; You will find that the number of edges isn't reduced, and thus isn't a minimum spanning tree.
 
 ;;; IO Functions ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -138,6 +168,7 @@
   "Algorithm 4 from the paper. Takes an `uber/graph` and returns ... something useful"
   [graph]
   (let [mst (minimum-spanning-tree graph)]
+    ;; Set each edge weight to ceil( length(e) / R ) - 1
     ))
 
 (defn -main
