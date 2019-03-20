@@ -29,7 +29,8 @@
 
 (defn unique-edges
   [graph]
-  (filter (fn [x] (= false (:mirror? x))) (uber/edges graph)))
+  (filter (fn [x] (= false (:mirror? x)))
+          (uber/edges graph)))
 
 (defn edge-weight
   "Takes a `dictionary` edge and produces a `vector` output of source and dest node names."
