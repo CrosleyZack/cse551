@@ -10,28 +10,20 @@
   ([]
    (nodes 26))
   ([n]
-   (map keyword
-        (map (comp str char)
-             (range 65 (+ 65 n))))))
-
-;; Performs cartesian product on n input `sequences`.
-;; See https://stackoverflow.com/questions/18246549/cartesian-product-in-clojure.
-(defmacro cart [& lists]
-  (let [syms (for [_ lists] (gensym))]
-    `(for [~@(mapcat list syms lists)]
-       (list ~@syms))))
+   (map (comp keyword str char)
+        (range 65 (+ 65 n)))))
 
 ;; Creates a random, fully connected graph with `int` num-nodes nodes and `int` max-weight per edge.
-(defmacro rand-full-graph
+(defn rand-full-graph
   [num-nodes max-weight]
   (let [allnodes (nodes num-nodes)]
-  `(uber/graph
-     ~@(reduce
-         (fn [prev [src dst]]
-           (conj prev
-                 `[~src ~dst ~(rand-int max-weight)}]))
-         '()
-         (cart allnodes allnodes)))))
+    (apply uber/graph
+           (reduce (fn [prev [src dst]]
+                     (conj prev
+                           [src dst (rand-int max-weight)]))
+                   '()
+                   (apply combo/cartesian-product
+                          (repeat 2 allnodes))))))
 
 ;;; Utility functions ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
