@@ -4,7 +4,7 @@
             [clojure.math.combinatorics :as combo]
             [jordanlewis.data.union-find :as uf]))
 
-;;; Non-domain utility functions.
+;;; Non-domain utility functions. ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn print-lines
   [& lines]
@@ -21,6 +21,14 @@
    (map (comp keyword str char)
         (range 65 (+ 65 n)))))
 
+(defn get-edges
+  "Retrieves the edges that exist in a fully connected graph with the set of nodes.
+  Removes self referencial nodes"
+  [nodes]
+  (filter (fn [[src dst]] (not (= src dst)))
+          (apply combo/cartesian-product
+                 (repeat 2 nodes))))
+
 ;; Creates a random, fully connected graph with `int` num-nodes nodes and `int` max-weight per edge.
 (defn rand-full-graph
   [num-nodes max-weight]
@@ -30,10 +38,9 @@
                      (conj prev
                            [src dst (rand-int max-weight)]))
                    '()
-                   (apply combo/cartesian-product
-                          (repeat 2 allnodes))))))
+                   (get-edges allnodes)))))
 
-;;; Utility functions ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Utility functions ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn ds-from
   "Initialize an atom-backed disjoint set from the given collection."
@@ -83,6 +90,7 @@
      ~@body))
 
 (defn unique-edges
+  "Gets the unique edges in the graph (removes bidirectional edges)"
   [graph]
   (filter (fn [x] (= false (:mirror? x)))
           (uber/edges graph)))
@@ -105,23 +113,32 @@
   [graph]
   (let [disj-set (ds-from (uber/nodes graph))
         edges    (sorted-edges graph)]
-    (reduce (fn [acc {:keys [src dest]
-                      :as   edge}]
-              (with-disj-set disj-set
-                (if (ds-shared-root? src dest)
-                  (do
-                    (ds-union src dest)
-                    (conj acc edge))
-                  acc)))
-            #{}
-            edges)))
+    (apply uber/graph (reduce (fn [acc {:keys [src dest]
+                                  :as   edge}]
+                          (with-disj-set disj-set
+                            (if (ds-shared-root? src dest)
+                              (do
+                                (ds-union src dest)
+                                (conj acc [src dest (edge-weight graph edge)]))
+                              acc)))
+                        '()
+                        edges))))
 
-;;; IO Functions ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;; IO Functions ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn read-graph
   "Takes a `str` file location and returns the `uber/graph` specified by the file."
   [location]
   nil)
+
+;;; Main ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn algorithm4
+  "Algorithm 4 from the paper. Takes an `uber/graph` and returns ... something useful"
+  [graph]
+  (let [mst (minimum-spanning-tree graph)]
+    ))
 
 (defn -main
   " Read in graphs and run algorithms. "
