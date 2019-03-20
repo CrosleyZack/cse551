@@ -1,6 +1,7 @@
 (ns relay-node.core
   (:gen-class)
   (:require [ubergraph.core :as uber]
+            [relay-node.seeded :as seeded]
             [clojure.math.combinatorics :as combo]
             [jordanlewis.data.union-find :as uf]))
 
@@ -34,9 +35,9 @@
   [allnodes max-coord]
   (reduce (fn [acc node]
             (assoc acc
-                   node {:x (rand-int max-coord)
-                         :y (rand-int max-coord)
-                         :z (rand-int max-coord)}))
+                   node {:x (seeded/rand-int max-coord)
+                         :y (seeded/rand-int max-coord)
+                         :z (seeded/rand-int max-coord)}))
           {}
           allnodes))
 
@@ -174,4 +175,7 @@
 (defn -main
   " Read in graphs and run algorithms. "
   [& args]
+  (let [seed (seeded/gen-seed)]
+    (println "Seeded RNG with " seeded ".")
+    (seeded/seed! seed))
   (println "Hello, World!"))
