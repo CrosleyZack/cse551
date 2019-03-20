@@ -59,8 +59,8 @@
     (apply uber/graph
            (reduce (fn [prev [src dst]]
                      (conj prev
-                           [src dst
-                            (lp-distance (vals (get node-locs src)) (vals (get node-locs dst)))]))
+                           [src dst {:length
+                                     (lp-distance (vals (get node-locs src)) (vals (get node-locs dst)))}]))
                    located-nodes
                    (get-edges allnodes)))))
 
@@ -119,10 +119,12 @@
   (filter (fn [x] (= false (:mirror? x)))
           (uber/edges graph)))
 
-(defn edge-weight
+(defn edge-value
   "Takes a `dictionary` edge and produces a `vector` output of source and dest node names."
-  [graph edge]
-  (:weight (uber/attrs graph [(:src edge) (:dest edge)])))
+  ([graph edge]
+   (edge-value graph edge :weight))
+  ([graph edge key]
+   (get (uber/attrs graph [(:src edge) (:dest edge)]) key)))
 
 (defn sorted-edges
   "Given a graph, returns it edges sorted in increasing order."
@@ -143,7 +145,8 @@
                                   (if (ds-shared-root? src dest)
                                     (do
                                       (ds-union src dest)
-                                      (conj acc [src dest (edge-weight graph edge)]))
+                                      ;; Note this doesn't also include the properties of the node.
+                                      (conj acc [src dest {:length (edge-value graph edge :length)}]))
                                     acc)))
                               '()
                               edges))))
@@ -166,12 +169,25 @@
 
 (defn algorithm4
   "Algorithm 4 from the paper. Takes an `uber/graph` and returns ... something useful"
-  [graph]
-  (let [mst (minimum-spanning-tree graph)]
+  [graph comm-range budget]
+  (let [mst      (minimum-spanning-tree graph)
+        weighted (atom (reduce (fn [acc {:keys [src dest]
+                                         :as   edge}]
+                                 (uber/add-attr acc src dest :weight
+                                                (- (Math/ceil (/  (edge-value acc edge :length) comm-range)) 1)))
+                               mst
+                               (uber/edges mst)))]
     ;; Set each edge weight to ceil( length(e) / R ) - 1
-    ))
+    (while (> (reduce + (map (fn [edge] (edge-value @weighted edge :weight)) (uber/edges @weighted))) budget)
+      (swap! weighted uber/remove-edges
+             (vector
+               (max-key
+                 (fn [x] (edge-value @weighted x :weight))
+                 (uber/edges @weighted)))))))
 
 (defn -main
   " Read in graphs and run algorithms. "
   [& args]
   (println "Hello, World!"))
+
+(ubergraph.core/)
