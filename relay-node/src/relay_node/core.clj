@@ -35,6 +35,11 @@
 
 ;;; Utility functions ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(defn ds-from
+  "Initialize an atom-backed disjoint set from the given collection."
+  [coll]
+  (atom (apply uf/union-find coll)))
+
 (defn ds-get-canonical
   "Perform the get-canonical operation on a disjoint set but update
   the atom-backed representation as well to take advantage of path
@@ -98,7 +103,7 @@
   "Takes a `uber/graph` and returns an `uber/graph` that is its minimum spanning tree.
   Implementation of Kruskal's algorithm."
   [graph]
-  (let [disj-set (atom (apply uf/union-find (uber/nodes graph)))
+  (let [disj-set (ds-from (uber/nodes graph))
         edges    (sorted-edges graph)]
     (reduce (fn [acc edge]
               (let [src (:src edge)
