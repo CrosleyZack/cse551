@@ -95,7 +95,7 @@
   (not= (ds-get-canonical disj-set-atom u)
         (ds-get-canonical disj-set-atom v)))
 
-(defmacro with-disj-set
+(defmacro ds-with
   "Rebind the prior three functions to themselves partially applied
   to the given disjoint set. Crucially, do this lexically, not for
   all subsequent calls as that would break ds-shared-root?.
@@ -148,39 +148,19 @@
   "Takes a `uber/graph` and returns an `uber/graph` that is its minimum spanning tree.
   Implementation of Kruskal's algorithm."
   [graph]
-<<<<<<< HEAD
   (let [disj-set    (ds-from (uber/nodes graph))
         edges       (sorted-edges graph)
         empty-graph (uber/remove-edges* graph (uber/edges graph))]
-    (reduce (fn [acc {:keys [src dest]
-                      :as   edge}]
-              (with-disj-set disj-set
-                (if (ds-shared-root? src dest)
-                  (do
-                    (ds-union src dest)
-                    (uber/add-edges* acc [(edge-canonical-form graph edge)]))
-                  acc)))
-            empty-graph
-            edges)))
-=======
-  (let [disj-set (ds-from (uber/nodes graph))
-        edges    (sorted-edges graph)]
-    (with-disj-set disj-set
-      (apply uber/graph
+    (ds-with disj-set
              (reduce (fn [acc {:keys [src dest]
                                :as   edge}]
                        (if (ds-shared-root? src dest)
                          (do
                            (ds-union src dest)
-                           ;; Note this doesn't also include the properties of the node.
-                           (conj acc
-                                 [src
-                                  dest
-                                  {:length (edge-value graph edge :length)}]))
+                           (uber/add-edges* acc [(edge-canonical-form graph edge)]))
                          acc))
-                     '()
-                     edges)))))
->>>>>>> bd00947... Clean up algorithm4 implementation.
+                     empty-graph
+                     edges))))
 
 ;; NOTE : Above algorithm doesn't work. Run:
 ;;   (def test1 (rand-full-graph 3 10))
