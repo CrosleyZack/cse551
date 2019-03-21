@@ -130,8 +130,8 @@
   "Given a graph, returns it edges sorted in increasing order."
   [graph]
   (->> graph
-    (unique-edges ,,,)
-    (sort #(compare (edge-weight graph %1) (edge-weight graph %2)) ,,,)))
+       (unique-edges ,,,)
+       (sort #(compare (edge-value graph %1) (edge-value graph %2)) ,,,)))
 
 ;; (defn add-edge-with-attrs
 ;;   "Adds an edge to the graph with the attributes provided."
