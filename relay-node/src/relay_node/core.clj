@@ -148,6 +148,7 @@
   "Takes a `uber/graph` and returns an `uber/graph` that is its minimum spanning tree.
   Implementation of Kruskal's algorithm."
   [graph]
+<<<<<<< HEAD
   (let [disj-set    (ds-from (uber/nodes graph))
         edges       (sorted-edges graph)
         empty-graph (uber/remove-edges* graph (uber/edges graph))]
@@ -161,6 +162,25 @@
                   acc)))
             empty-graph
             edges)))
+=======
+  (let [disj-set (ds-from (uber/nodes graph))
+        edges    (sorted-edges graph)]
+    (with-disj-set disj-set
+      (apply uber/graph
+             (reduce (fn [acc {:keys [src dest]
+                               :as   edge}]
+                       (if (ds-shared-root? src dest)
+                         (do
+                           (ds-union src dest)
+                           ;; Note this doesn't also include the properties of the node.
+                           (conj acc
+                                 [src
+                                  dest
+                                  {:length (edge-value graph edge :length)}]))
+                         acc))
+                     '()
+                     edges)))))
+>>>>>>> bd00947... Clean up algorithm4 implementation.
 
 ;; NOTE : Above algorithm doesn't work. Run:
 ;;   (def test1 (rand-full-graph 3 10))
@@ -184,18 +204,26 @@
   (let [mst      (minimum-spanning-tree graph)
         weighted (atom (reduce (fn [acc {:keys [src dest]
                                          :as   edge}]
-                                 (uber/add-attr acc src dest :weight
-                                                (- (Math/ceil (/  (edge-value acc edge :length) comm-range)) 1)))
+                                 (uber/add-attr acc
+                                                src
+                                                dest
+                                                :weight
+                                                (dec (Math/ceil
+                                                       (/ (edge-value acc edge :length)
+                                                          comm-range)))))
                                mst
                                (uber/edges mst)))]
-    ;; Set each edge weight to ceil( length(e) / R ) - 1
-    (while (> (reduce + (map (fn [edge] (edge-value @weighted edge :weight)) (uber/edges @weighted))) budget)
-      (swap! weighted uber/remove-edges*
-             @weighted
-             (vector
-               (max-key
-                 (fn [x] (edge-value @weighted x :weight))
-                 (uber/edges @weighted)))))))
+    (letfn [(edge-weight [edge]
+              (edge-value @weighted edge :weight))]
+      ;; Set each edge weight to ceil( length(e) / R ) - 1
+      (while (> (reduce +
+                        (map edge-weight
+                             (uber/edges @weighted)))
+                budget)
+        (swap! weighted
+               uber/remove-edges
+               [(max-key edge-weight
+                         (uber/edges @weighted))])))))
 
 (defn -main
   " Read in graphs and run algorithms. "
