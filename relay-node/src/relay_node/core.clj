@@ -186,7 +186,9 @@
           (uber/edges tree)))
 
 (defn algorithm4
-  "Algorithm 4 from the paper. Takes an `uber/graph` and returns ... something useful"
+  "Algorithm 4 from the paper. Takes an `uber/graph` and returns an `uber/graph`
+  representing a placement of relay nodes with the minimum number of connected
+  components."
   [graph comm-range budget]
   (let [mst      (minimum-spanning-tree graph)
         weighted (atom (weight-tree mst comm-range))]
