@@ -185,6 +185,28 @@
           tree
           (uber/edges tree)))
 
+(defn unidirectional-edges
+  [g]
+  (->> g
+       uber/edges
+       (filter :mirror?)))
+
+(defn max-edge-by
+  [g k]
+  (->> g
+       unidirectional-edges
+       (apply max-key #(edge-value g %))))
+
+(defn total-edge-weight
+  [g]
+  (reduce +
+          (map #(edge-value g %)
+               (unidirectional-edges g))))
+
+(defn remove-edge
+  [g e]
+  (uber/remove-edges* g [e]))
+
 (defn algorithm4
   "Algorithm 4 from the paper. Takes an `uber/graph` and returns an `uber/graph`
   representing a placement of relay nodes with the minimum number of connected
@@ -192,16 +214,11 @@
   [graph comm-range budget]
   (let [mst      (minimum-spanning-tree graph)
         weighted (atom (weight-tree mst comm-range))]
-    (while (> (reduce +
-                      (map #(edge-value @weighted %)
-                           (uber/edges @weighted)))
+    (while (> (total-edge-weight @weighted)
               budget)
-      (let [{:keys [src dest]
-             :as   heaviest-edge} (apply max-key #(edge-value @weighted %)
-                                         (uber/edges @weighted))]
-        (swap! weighted
-               uber/remove-edges*
-               [heaviest-edge])))
+      (swap! weighted
+             remove-edge
+             (max-edge-by @weighted :weight)))
     @weighted))
 
 (defn -main
