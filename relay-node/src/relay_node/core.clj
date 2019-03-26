@@ -78,7 +78,7 @@
   [disj-set-atom val]
   (let [[new-repr res] (uf/get-canonical @disj-set-atom val)]
     (reset! disj-set-atom new-repr)
-    val))
+    res))
 
 (defn ds-union
   "Perform the union operation on a disjoint set but update the
@@ -92,8 +92,8 @@
   "Check if the provided elements share a root in the given disjoint
   set, updating internal representation transparently."
   [disj-set-atom u v]
-  (not= (ds-get-canonical disj-set-atom u)
-        (ds-get-canonical disj-set-atom v)))
+  (= (ds-get-canonical disj-set-atom u)
+     (ds-get-canonical disj-set-atom v)))
 
 (defmacro ds-with
   "Rebind the prior three functions to themselves partially applied
@@ -154,7 +154,7 @@
     (ds-with disj-set
              (reduce (fn [acc {:keys [src dest]
                                :as   edge}]
-                       (if (ds-shared-root? src dest)
+                       (if (not (ds-shared-root? src dest))
                          (do
                            (ds-union src dest)
                            (uber/add-edges* acc [(edge-canonical-form graph edge)]))
