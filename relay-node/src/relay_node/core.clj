@@ -171,32 +171,36 @@
 
 ;;; Main ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(defn weight-tree
+  [tree scaling-factor]
+  (reduce (fn [acc {:keys [src dest]
+                    :as   edge}]
+            (uber/add-attr acc
+                           src
+                           dest
+                           :weight
+                           (dec (Math/ceil
+                                  (/ (edge-value acc edge :length)
+                                     scaling-factor)))))
+          tree
+          (uber/edges tree)))
+
 (defn algorithm4
   "Algorithm 4 from the paper. Takes an `uber/graph` and returns ... something useful"
   [graph comm-range budget]
   (let [mst      (minimum-spanning-tree graph)
-        weighted (atom (reduce (fn [acc {:keys [src dest]
-                                         :as   edge}]
-                                 (uber/add-attr acc
-                                                src
-                                                dest
-                                                :weight
-                                                (dec (Math/ceil
-                                                       (/ (edge-value acc edge :length)
-                                                          comm-range)))))
-                               mst
-                               (uber/edges mst)))]
-    (letfn [(edge-weight [edge]
-              (edge-value @weighted edge :weight))]
-      ;; Set each edge weight to ceil( length(e) / R ) - 1
-      (while (> (reduce +
-                        (map edge-weight
-                             (uber/edges @weighted)))
-                budget)
+        weighted (atom (weight-tree mst comm-range))]
+    (while (> (reduce +
+                      (map #(edge-value @weighted %)
+                           (uber/edges @weighted)))
+              budget)
+      (let [{:keys [src dest]
+             :as   heaviest-edge} (apply max-key #(edge-value @weighted %)
+                                         (uber/edges @weighted))]
         (swap! weighted
-               uber/remove-edges
-               [(max-key edge-weight
-                         (uber/edges @weighted))])))))
+               uber/remove-edges*
+               [heaviest-edge])))
+    @weighted))
 
 (defn -main
   " Read in graphs and run algorithms. "
