@@ -162,13 +162,6 @@
                      empty-graph
                      edges))))
 
-;; NOTE : Above algorithm doesn't work. Run:
-;;   (def test1 (rand-full-graph 3 10))
-;;   (uber/pprint test1)
-;;   (def test2 (minimum-spanning-tree test1))
-;;   (uber/pprint test2)
-;; You will find that the number of edges isn't reduced, and thus isn't a minimum spanning tree.
-
 ;;; IO Functions ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn read-graph
