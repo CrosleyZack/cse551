@@ -171,19 +171,20 @@
 
 ;;; Main ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn weight-tree
+(defn weighted-mst
   [tree scaling-factor]
-  (reduce (fn [acc {:keys [src dest]
-                    :as   edge}]
-            (uber/add-attr acc
-                           src
-                           dest
-                           :weight
-                           (dec (Math/ceil
-                                  (/ (edge-value acc edge :length)
-                                     scaling-factor)))))
-          tree
-          (uber/edges tree)))
+  (let [mst (minimum-spanning-tree tree)]
+    (reduce (fn [acc {:keys [src dest]
+                      :as   edge}]
+              (uber/add-attr acc
+                             src
+                             dest
+                             :weight
+                             (dec (Math/ceil
+                                    (/ (edge-value acc edge :length)
+                                       scaling-factor)))))
+            mst
+            (uber/edges mst))))
 
 (defn unidirectional-edges
   [g]
@@ -212,8 +213,7 @@
   representing a placement of relay nodes with the minimum number of connected
   components."
   [graph comm-range budget]
-  (let [mst      (minimum-spanning-tree graph)
-        weighted (atom (weight-tree mst comm-range))]
+  (let [weighted (atom (weighted-mst graph comm-range))]
     (while (> (total-edge-weight @weighted)
               budget)
       (swap! weighted
