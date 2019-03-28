@@ -113,11 +113,14 @@
                      ds-union])]
      ~@body))
 
-(defn unique-edges
+;;; Graph functions ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn unidirectional-edges
   "Gets the unique edges in the graph (removes bidirectional edges)"
-  [graph]
-  (filter (fn [x] (= false (:mirror? x)))
-          (uber/edges graph)))
+  [g]
+  (->> g
+       uber/edges
+       (filter :mirror?)))
 
 (defn edge-value
   "Takes a `dictionary` edge and produces a `vector` output of source and dest node names."
@@ -130,19 +133,42 @@
   "Given a graph, returns it edges sorted in increasing order."
   [graph]
   (->> graph
-       (unique-edges ,,,)
+       (unidirectional-edges ,,,)
        (sort #(compare (edge-value graph %1) (edge-value graph %2)) ,,,)))
-
-;; (defn add-edge-with-attrs
-;;   "Adds an edge to the graph with the attributes provided."
-;;   [graph edge attrs]
-;;   (-> graph
-;;     (uber/add-edges* (vector edge))
-;;     (uber/add-attrs edge attrs)))
 
 (defn edge-canonical-form
   [g edge]
   ((juxt :src :dest #(uber/attrs g %)) edge))
+
+(defn weight-tree
+  [tree scaling-factor]
+  (reduce (fn [acc {:keys [src dest]
+                    :as   edge}]
+            (uber/add-attr acc
+                           src
+                           dest
+                           :weight
+                           (dec (Math/ceil
+                                  (/ (edge-value acc edge :length)
+                                     scaling-factor)))))
+          tree
+          (uber/edges tree)))
+
+(defn max-edge-by
+  [g k]
+  (->> g
+       unidirectional-edges
+       (apply max-key #(edge-value g %))))
+
+(defn total-edge-weight
+  [g]
+  (reduce +
+          (map #(edge-value g %)
+               (unidirectional-edges g))))
+
+(defn remove-edge
+  [g e]
+  (uber/remove-edges* g [e]))
 
 (defn minimum-spanning-tree
   "Takes a `uber/graph` and returns an `uber/graph` that is its minimum spanning tree.
@@ -162,6 +188,12 @@
                      empty-graph
                      edges))))
 
+(defn k-minimum-spanning-tree
+  "Takes a `uber/graph` and an `int` value `k` and returns an `uber/graph` that is the
+  minimum spanning tree with k vertices"
+  [graph k]
+  nil)
+
 ;;; IO Functions ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn read-graph
@@ -170,42 +202,6 @@
   nil)
 
 ;;; Main ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(defn weight-tree
-  [tree scaling-factor]
-  (reduce (fn [acc {:keys [src dest]
-                    :as   edge}]
-            (uber/add-attr acc
-                           src
-                           dest
-                           :weight
-                           (dec (Math/ceil
-                                  (/ (edge-value acc edge :length)
-                                     scaling-factor)))))
-          tree
-          (uber/edges tree)))
-
-(defn unidirectional-edges
-  [g]
-  (->> g
-       uber/edges
-       (filter :mirror?)))
-
-(defn max-edge-by
-  [g k]
-  (->> g
-       unidirectional-edges
-       (apply max-key #(edge-value g %))))
-
-(defn total-edge-weight
-  [g]
-  (reduce +
-          (map #(edge-value g %)
-               (unidirectional-edges g))))
-
-(defn remove-edge
-  [g e]
-  (uber/remove-edges* g [e]))
 
 (defn algorithm4
   "Algorithm 4 from the paper. Takes an `uber/graph` and returns an `uber/graph`
@@ -220,6 +216,23 @@
              remove-edge
              (max-edge-by @weighted :weight)))
     @weighted))
+
+(defn algorithm5
+  "Algorithm 5 from the paper. Takes an `uber/graph` and returns an `uber/graph`
+  representing the placement of relay nodes with the maximum connected component
+  size."
+  ([graph comm-range budget]
+   (algorithm5 graph comm-range budget (uber/count-nodes)))
+  ([graph comm-range budget k]
+   (let [kmst (k-minimum-spanning-tree graph k)
+         weighted (weight-tree kmst comm-range)]
+     (if (> (total-edge-weight weighted) budget)
+       weighted
+       (recur graph comm-range budget (dec k))))))
+   ;; (-> graph
+   ;;   (k-minimum-spanning-tree k)
+   ;;   (weight-tree comm-range)
+   ;;   (if (> (total-edge-weight ))))))
 
 (defn -main
   " Read in graphs and run algorithms. "
