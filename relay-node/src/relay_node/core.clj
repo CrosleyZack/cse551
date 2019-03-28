@@ -222,7 +222,7 @@
   representing the placement of relay nodes with the maximum connected component
   size."
   ([graph comm-range budget]
-   (algorithm5 graph comm-range budget (uber/count-nodes)))
+   (algorithm5 graph comm-range budget (uber/count-nodes graph)))
   ([graph comm-range budget k]
    (let [kmst (k-minimum-spanning-tree graph k)
          weighted (weight-tree kmst comm-range)]
