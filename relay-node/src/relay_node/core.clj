@@ -29,17 +29,6 @@
           (apply combo/cartesian-product
                  (repeat 2 nodes))))
 
-(defn randomly-locate-nodes
-  "Get a dictionary mapping each node to an (x,y,z) location."
-  [allnodes max-coord]
-  (reduce (fn [acc node]
-            (assoc acc
-                   node {:x (rand-int max-coord)
-                         :y (rand-int max-coord)
-                         :z (rand-int max-coord)}))
-          {}
-          allnodes))
-
 (defn lp-distance
   "Takes two number sequences of equal lenght and produces the euclidean distance"
   ([point1 point2]
@@ -50,19 +39,49 @@
            0
            (map vector point1 point2))))
 
+(defn add-all-edges
+  "Takes an `uber/graph` and returns an `uber/graph` with edges between all nodes."
+  [graph]
+  (reduce (fn [acc edge]
+            (uber/add-edges acc edge))
+          graph
+          (get-edges (uber/nodes graph))))
+
+(defn randomly-locate-nodes
+  "Takes an `uber/graph` and an `int` maximum value for axis values and assigns
+  x, y, and z coordinates for each."
+  [max-coord graph]
+  (reduce (fn [acc node]
+            (uber/add-attrs acc
+                            node
+                            {:x (rand-int max-coord)
+                             :y (rand-int max-coord)
+                             :z (rand-int max-coord)}))
+          graph
+          (uber/nodes graph)))
+
+(defn length-graph
+  "Takes an `uber/graph` with (X,Y,Z) located nodes an returns an `uber/graph` with
+  length attributes on edges equal to the distance between the two points."
+  [graph]
+  (reduce (fn [acc {:keys [src dest]
+                    :as   edge}]
+            (uber/add-attr acc
+                           src
+                           dest
+                           :length
+                           (lp-distance (vals (uber/attrs graph src)) (vals (uber/attrs graph dest)))))
+          graph
+          (uber/edges graph)))
+
 (defn rand-full-graph
   "Create fully connected, random graph with random locations for each node and euclidean graph weights"
   [num-nodes max-coord]
-  (let [allnodes      (nodes num-nodes)
-        node-locs     (randomly-locate-nodes allnodes max-coord)
-        located-nodes (map (fn [x] (conj [] x (get node-locs x))) allnodes)]
-    (apply uber/graph
-           (reduce (fn [prev [src dst]]
-                     (conj prev
-                           [src dst {:length
-                                     (lp-distance (vals (get node-locs src)) (vals (get node-locs dst)))}]))
-                   located-nodes
-                   (get-edges allnodes)))))
+  (->> (nodes num-nodes)
+    (apply uber/graph)
+    (add-all-edges)
+    (randomly-locate-nodes max-coord)
+    (length-graph)))
 
 ;;; Utility functions ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -114,13 +133,14 @@
      ~@body))
 
 ;;; Graph functions ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;; Alg4 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn unidirectional-edges
   "Gets the unique edges in the graph (removes bidirectional edges)"
   [g]
   (->> g
-       uber/edges
-       (filter :mirror?)))
+    uber/edges
+    (filter :mirror?)))
 
 (defn edge-value
   "Takes a `dictionary` edge and produces a `vector` output of source and dest node names."
@@ -133,8 +153,8 @@
   "Given a graph, returns it edges sorted in increasing order."
   [graph]
   (->> graph
-       (unidirectional-edges ,,,)
-       (sort #(compare (edge-value graph %1) (edge-value graph %2)) ,,,)))
+    (unidirectional-edges)
+    (sort #(compare (edge-value graph %1) (edge-value graph %2)))))
 
 (defn edge-canonical-form
   [g edge]
@@ -157,8 +177,8 @@
 (defn max-edge-by
   [g k]
   (->> g
-       unidirectional-edges
-       (apply max-key #(edge-value g %))))
+    unidirectional-edges
+    (apply max-key #(edge-value g %))))
 
 (defn total-edge-weight
   [g]
@@ -188,53 +208,98 @@
                      empty-graph
                      edges))))
 
-(defn k-minimum-spanning-tree
-  "Takes a `uber/graph` and an `int` value `k` and returns an `uber/graph` that is the
-  minimum spanning tree with k vertices"
-  [graph k]
+;;;;; Alg5 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn node-location
+  [graph node]
+  (uber/attrs g node))
+
+(defn key-intersection
+  [dict1 dict2]
+  (keep #(some->> % (find dict1) key) (keys dict2)))
+
+(defn midpoint
+  [graph src dest]
+  (let [src-loc (node-location graph src)
+        dst-loc (node-location graph dest)]
+    (reduce (fn [acc key]
+              (assoc acc key (/ (+
+                                  (get src-loc key)
+                                  (get dst-loc key))
+                                2)))
+            {}
+            (key-intersection src-loc dst-loc))))
+
+;; `TODO` write function to get number of nodes in a graph that
+;; are contained within the circle.
+(defn points-in-circle
+  [graph center diameter]
   nil)
+
+(defn get-mst-option
+  "Takes an `uber/graph`, an `int` k, a source `uber/node` and destination `uber/node` and
+  produces a minimum spanning tree or `nil`."
+  [graph k src dst]
+  (let [mid      (midpoint src dst)
+        diameter (* (Math/sqrt 3) (lp-distance (vals src dst)))]
+    (if (>= (points-in-circle graph mid diamater) k)
+      ;; `TODO` write this section - get minimum potential set and the accompanying minimum spanning tree.
+      ()
+      nil)))
+
+  (defn k-minimum-spanning-tree
+    "Takes a `uber/graph` and an `int` value `k` and returns an `uber/graph` that is the
+  minimum spanning tree with k vertices"
+    [graph k]
+    (let [nodes (uber/nodes graph)]
+      (reduce (fn [acc [src dst]]
+                (->> (midpoint src dst)
+                  (circle0 ))
+                (conj acc ()))
+              []
+              (get-edges nodes))))
 
 ;;; IO Functions ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn read-graph
-  "Takes a `str` file location and returns the `uber/graph` specified by the file."
-  [location]
-  nil)
+  (defn read-graph
+    "Takes a `str` file location and returns the `uber/graph` specified by the file."
+    [location]
+    nil)
 
 ;;; Main ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn algorithm4
-  "Algorithm 4 from the paper. Takes an `uber/graph` and returns an `uber/graph`
+  (defn algorithm4
+    "Algorithm 4 from the paper. Takes an `uber/graph` and returns an `uber/graph`
   representing a placement of relay nodes with the minimum number of connected
   components."
-  [graph comm-range budget]
-  (let [mst      (minimum-spanning-tree graph)
-        weighted (atom (weight-tree mst comm-range))]
-    (while (> (total-edge-weight @weighted)
-              budget)
-      (swap! weighted
-             remove-edge
-             (max-edge-by @weighted :weight)))
-    @weighted))
+    [graph comm-range budget]
+    (let [mst      (minimum-spanning-tree graph)
+          weighted (atom (weight-tree mst comm-range))]
+      (while (> (total-edge-weight @weighted)
+                budget)
+        (swap! weighted
+               remove-edge
+               (max-edge-by @weighted :weight)))
+      @weighted))
 
-(defn algorithm5
-  "Algorithm 5 from the paper. Takes an `uber/graph` and returns an `uber/graph`
+  (defn algorithm5
+    "Algorithm 5 from the paper. Takes an `uber/graph` and returns an `uber/graph`
   representing the placement of relay nodes with the maximum connected component
   size."
-  ([graph comm-range budget]
-   (algorithm5 graph comm-range budget (uber/count-nodes graph)))
-  ([graph comm-range budget k]
-   (let [kmst (k-minimum-spanning-tree graph k)
-         weighted (weight-tree kmst comm-range)]
-     (if (> (total-edge-weight weighted) budget)
-       weighted
-       (recur graph comm-range budget (dec k))))))
-   ;; (-> graph
-   ;;   (k-minimum-spanning-tree k)
-   ;;   (weight-tree comm-range)
-   ;;   (if (> (total-edge-weight ))))))
+    ([graph comm-range budget]
+     (algorithm5 graph comm-range budget (uber/count-nodes graph)))
+    ([graph comm-range budget k]
+     (let [kmst     (k-minimum-spanning-tree graph k)
+           weighted (weight-tree kmst comm-range)]
+       (if (> (total-edge-weight weighted) budget)
+         weighted
+         (recur graph comm-range budget (dec k))))))
+  ;; (-> graph
+  ;;   (k-minimum-spanning-tree k)
+  ;;   (weight-tree comm-range)
+  ;;   (if (> (total-edge-weight ))))))
 
-(defn -main
-  " Read in graphs and run algorithms. "
-  [& args]
-  (println "Hello, World!"))
+  (defn -main
+    " Read in graphs and run algorithms. "
+    [& args]
+    (println "Hello, World!"))
