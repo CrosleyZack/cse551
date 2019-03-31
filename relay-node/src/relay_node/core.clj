@@ -2,7 +2,8 @@
   (:gen-class)
   (:require [ubergraph.core :as uber]
             [clojure.math.combinatorics :as combo]
-            [jordanlewis.data.union-find :as uf]))
+            [jordanlewis.data.union-find :as uf]
+            [clojure.string :as str]))
 
 ;;; Non-domain utility functions. ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -164,10 +165,34 @@
 
 ;;; IO Functions ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(defn tokenize
+  [s]
+  (str/split node-line #" +"))
+
+(defn parse-edge-line
+  [edge-line]
+  (let [[x y length] (tokenize edge-line)]
+    {:src    x
+     :dst    y
+     :length length}))
+
+(defn parse-edges
+  [graph-str]
+  (map parse-edge-line
+       (str/split-lines graph-str)))
+
+(defn instantiate-graph
+  [edges]
+  (apply uber/graph (map (juxt :src :dst :length)
+                         edges)))
+
 (defn read-graph
   "Takes a `str` file location and returns the `uber/graph` specified by the file."
   [location]
-  nil)
+  (-> location
+      slurp
+      parse-edges
+      instantiate-graph))
 
 ;;; Main ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
