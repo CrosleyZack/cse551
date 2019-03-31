@@ -245,7 +245,7 @@
 
 (defn get-mst-option
   "Takes an `uber/graph`, an `int` k, a source `uber/node` and destination `uber/node` and
-  produces a minimum spanning tree or `nil`."
+  produces an `uber/graph` minimum spanning tree or `nil`."
   [graph k src dst]
   (let [mid      (midpoint src dst)
         diameter (* (Math/sqrt 3) (lp-distance (vals src dst)))]
@@ -259,22 +259,16 @@
   minimum spanning tree with k vertices"
   [graph k]
   (->> graph
-        (uber/nodes)
-        (get-edges)
+        (uber/nodes ,,,)
+        (get-edges ,,,)
         (reduce (fn [acc [src dst]]
-                  (let [option (get-mst-option k src dst)]
+                  (let [option (get-mst-option graph k src dst)]
                     (if option
                       (conj acc option)
                       acc)))
-                [])
-        (min-key total-edge-weight)))
-    ;; ;; Gets all options.
-    ;; (reduce (fn [acc [src dst]]
-    ;;           (let []))
-    ;;         []
-    ;;         (get-edges nodes))
-    ;; ;; return the minimum weight tree.
-    ;; (min-key total-edge-weight )))
+                []
+                ,,,)
+        (min-key total-edge-weight ,,,)))
 
 ;;; IO Functions ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
