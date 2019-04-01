@@ -212,7 +212,7 @@
 
 (defn node-location
   [graph node]
-  (uber/attrs g node))
+  (uber/attrs graph node))
 
 (defn key-intersection
   [dict1 dict2]
@@ -243,6 +243,87 @@
           0
           (uber/nodes graph)))
 
+(defn point-in-square
+  "Takes a `dict` point and two `dict` points indicating opposite square corners.
+  Returns true if the first point is in the square contained in these two points.
+  Checks if the point is contained by square by checking if the degree formed by
+  the three points is greater than 90."
+  [point top-left-corner bottom-right-corner]
+  (let [a (lp-distance p top-left-corner)
+        b (lp-distance p bottom-right-corner)
+        c (lp-distance top-left-corner bottom-right-corner)
+        angle (Math/acos (/
+                           (- (Math/pow c 2) (Math/pow a 2) (Math/pow b 2))
+                           (* -2 a b)))]
+    (if (>= angle 90)
+      true
+      false)))
+
+;; c^2 = a^2 + b^2 - 2ab * cos(C)
+;; cos(C) = ( c^2 - a^2 - b^2 ) / (-2ab)
+;; C = cos^-1 (( c^2 - a^2 - b^2 ) / (-2ab))
+(defn points-in-square
+  "Checks how many points fall in this square. An item
+  falls in this square if the angle formed by top-left-corner,
+  point, and bottom-right-corner is greater than or equal to
+  90."
+  [graph top-left-corner bottom-right-corner]
+  (reduce (fn [acc point]
+            (let [p (node-location point)]
+              (if (point-in-square p top-left-corner bottom-right-corner)
+                (inc acc)
+                acc)))
+          0
+          (uber/nodes graph)))
+
+(defn point-exists-in-square
+  "returns true the first encounter of a node in the square. Else returns false."
+  ([graph top-left-corner bottom-right-corner]
+   (point-exists-in-square graph top-left-corner bottom-right-corner (uber/nodes graph)))
+  ([graph top-left-corner bottom-right-corner nodes]
+   (if (empty? nodes)
+     false
+     (if (point-in-square (node-location (first nodes))
+                          top-left-corner
+                          bottom-right-corner)
+       true
+       (recur graph top-left-corner bottom-right-corner (rest nodes))))))
+
+(defn grid-sizes
+  ([num-vertices edge-length]
+   (grid-sizes num-vertices edge-length 1))
+  ([num-vertices edge-length i]
+   (lazy-seq (cons (* i (/ edge-length num-vertices))
+                   (grid-sizes num-vertices edge-length (inc i))))))
+
+(defn cell-locations
+  ([center edge-length grid-size]
+   (cell-locations center edge-length grid-size 0))
+  ([center edge-length grid-size i]
+   ;; `TODO` how do we get the location of cells in the grid.
+   (lazy-seq (cons ()
+                   (cell-locations center edge-length grid-size (inc i))))))
+
+(defn g-potential
+  [graph center edge-length grid-size]
+  (reduce (fn [acc [top-left-corner bottom-right-corner]]
+            (if (point-exists-in-square graph top-left-corner bottom-right-corner)
+              (inc acc)
+              acc))
+            0
+            (cell-locations center edge-length grid-size)))
+
+(defn mid-potential-set
+  "Get the "
+  [graph center edge-length]
+  (let [k (uber/count-nodes graph)]
+    ;; `TODO` take the output of this reduction and return the one with minimum potential
+    (-> (take-while #(<= edge-length %) (grid-sizes k edge-length))
+        (reduce (fn [acc grid-size]
+              (assoc acc grid-size (g-potential graph center edge-length grid-size)))
+            {})
+      (apply min-key val))))
+
 (defn get-mst-option
   "Takes an `uber/graph`, an `int` k, a source `uber/node` and destination `uber/node` and
   produces an `uber/graph` minimum spanning tree or `nil`."
@@ -250,6 +331,8 @@
   (let [mid      (midpoint src dst)
         diameter (* (Math/sqrt 3) (lp-distance (vals src dst)))]
     (if (>= (points-in-circle graph mid diamater) k)
+      ;; Suppose a square with side of length `diameter` centered around `mid`
+      (min-potential-set graph mid diameter)
       ;; `TODO` write this section - get minimum potential set and the accompanying minimum spanning tree as an `uber/graph`.
       ()
       nil)))
