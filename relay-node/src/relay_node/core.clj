@@ -243,14 +243,17 @@
           0
           (uber/nodes graph)))
 
+;; c^2 = a^2 + b^2 - 2ab * cos(C)
+;; cos(C) = ( c^2 - a^2 - b^2 ) / (-2ab)
+;; C = cos^-1 (( c^2 - a^2 - b^2 ) / (-2ab))
 (defn point-in-square
   "Takes a `dict` point and two `dict` points indicating opposite square corners.
   Returns true if the first point is in the square contained in these two points.
   Checks if the point is contained by square by checking if the degree formed by
   the three points is greater than 90."
   [point top-left-corner bottom-right-corner]
-  (let [a (lp-distance p top-left-corner)
-        b (lp-distance p bottom-right-corner)
+  (let [a (lp-distance point top-left-corner)
+        b (lp-distance point bottom-right-corner)
         c (lp-distance top-left-corner bottom-right-corner)
         angle (Math/acos (/
                            (- (Math/pow c 2) (Math/pow a 2) (Math/pow b 2))
@@ -259,9 +262,6 @@
       true
       false)))
 
-;; c^2 = a^2 + b^2 - 2ab * cos(C)
-;; cos(C) = ( c^2 - a^2 - b^2 ) / (-2ab)
-;; C = cos^-1 (( c^2 - a^2 - b^2 ) / (-2ab))
 (defn points-in-square
   "Checks how many points fall in this square. An item
   falls in this square if the angle formed by top-left-corner,
@@ -290,6 +290,8 @@
        (recur graph top-left-corner bottom-right-corner (rest nodes))))))
 
 (defn grid-sizes
+  "Takes an `int` number of vertices and a `float` edge length to determine the size of a grid edge.
+  Lazy sequence produces multiple valid grid sizes which are chosen between."
   ([num-vertices edge-length]
    (grid-sizes num-vertices edge-length 1))
   ([num-vertices edge-length i]
@@ -297,31 +299,49 @@
                    (grid-sizes num-vertices edge-length (inc i))))))
 
 (defn cell-locations
+  "Takes a `dict` center, an `int` edge-length, and a `float` grid size and produces top left
+  corners of grid squares."
   ([center edge-length grid-size]
-   (cell-locations center edge-length grid-size 0))
-  ([center edge-length grid-size i]
-   ;; `TODO` how do we get the location of cells in the grid.
-   (lazy-seq (cons ()
-                   (cell-locations center edge-length grid-size (inc i))))))
+   (let [count (/ edge-length grid-size)
+         halved (/ edge-length 2)
+         top-left (merge-with + center
+                              (zipmap [:x :y :z]
+                                      [(- halved) halved 0]))]
+     (for [i (range count)]
+      (for [j (range count)]
+        [(merge-with + top-left
+                     (zipmap [:x :y :z]
+                             [(* i grid-size)
+                              (- (* j grid-size))
+                              0]))
+        (merge-with + top-left
+                    (zipmap [:x :y :z]
+                            [(* (inc i) grid-size)
+                              (- (* (inc j) grid-size))
+                             0]))])))))
 
 (defn g-potential
-  [graph center edge-length grid-size]
-  (reduce (fn [acc [top-left-corner bottom-right-corner]]
-            (if (point-exists-in-square graph top-left-corner bottom-right-corner)
-              (inc acc)
-              acc))
-            0
-            (cell-locations center edge-length grid-size)))
+"takes an `uber/graph`, a `dict` square center, a `float` edge length, and a `float` grid
+  size and produces a g-potential measure."
+[graph center edge-length grid-size]
+(reduce (fn [acc [top-left-corner bottom-right-corner]]
+          (if (point-exists-in-square graph top-left-corner bottom-right-corner)
+            (inc acc)
+            acc))
+        0
+        (cell-locations center edge-length grid-size)))
 
 (defn mid-potential-set
-  "Get the "
+  "Get the minimum potential item from the options. Still not sure what this really means...
+  `TODO` Figure out what this really means."
   [graph center edge-length]
   (let [k (uber/count-nodes graph)]
     ;; `TODO` take the output of this reduction and return the one with minimum potential
+    ;; `TODO` this is the wrong way to use take-while....
     (-> (take-while #(<= edge-length %) (grid-sizes k edge-length))
-        (reduce (fn [acc grid-size]
-              (assoc acc grid-size (g-potential graph center edge-length grid-size)))
-            {})
+      (reduce (fn [acc grid-size]
+                (assoc acc grid-size (g-potential graph center edge-length grid-size)))
+              {})
       (apply min-key val))))
 
 (defn get-mst-option
@@ -342,16 +362,16 @@
   minimum spanning tree with k vertices"
   [graph k]
   (->> graph
-        (uber/nodes ,,,)
-        (get-edges ,,,)
-        (reduce (fn [acc [src dst]]
-                  (let [option (get-mst-option graph k src dst)]
-                    (if option
-                      (conj acc option)
-                      acc)))
-                []
-                ,,,)
-        (min-key total-edge-weight ,,,)))
+    (uber/nodes ,,,)
+    (get-edges ,,,)
+    (reduce (fn [acc [src dst]]
+              (let [option (get-mst-option graph k src dst)]
+                (if option
+                  (conj acc option)
+                  acc)))
+            []
+            ,,,)
+    (min-key total-edge-weight ,,,)))
 
 ;;; IO Functions ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
