@@ -382,7 +382,7 @@
 
 (defn tokenize
   [s]
-  (str/split node-line #" +"))
+  (str/split s #" +"))
 
 (defn parse-edge-line
   [edge-line]
