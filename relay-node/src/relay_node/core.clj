@@ -11,7 +11,9 @@
 (defn print-lines
   [& lines]
   (doseq [line lines]
-    (apply println line)))
+     (apply println line)))
+
+(defn valmap [f m] (zipmap (keys m) (map f (vals m))))
 
 ;;; Generate a random graph for testing ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -30,20 +32,6 @@
   (filter (fn [[src dst]] (not (= src dst)))
           (apply combo/cartesian-product
                  (repeat 2 nodes))))
-
-(defn coords-seq
-  [m]
-  ((juxt :x :y :z) m))
-
-(defn lp-distance
-  "Takes two number sequences of equal length and produces the euclidean distance"
-  ([point1 point2]
-   (lp-distance point1 point2 2))
-  ([point1 point2 pow]
-   (Math/sqrt (reduce (fn [acc [x y]]
-                        (+ acc (Math/pow (- x y) 2)))
-                      0
-                      (map vector point1 point2)))))
 
 (defn add-all-edges
   "Takes an `uber/graph` and returns an `uber/graph` with edges between all nodes."
@@ -76,7 +64,7 @@
                            src
                            dest
                            :length
-                           (lp-distance (vals (uber/attrs graph src)) (vals (uber/attrs graph dest)))))
+                           (lp-distance (uber/attrs graph src) (uber/attrs graph dest))))
           graph
           (uber/edges graph)))
 
@@ -136,7 +124,22 @@
                    '[ds-get-canonical
                      ds-shared-root?
                      ds-union])]
-     ~@body))
+      ~@body))
+
+(defn coords-seq
+  [m]
+  ((juxt :x :y :z) m))
+
+(defn lp-distance
+  "Takes two number sequences of equal length and produces the euclidean distance"
+  ([point1 point2]
+   (lp-distance point1 point2 2))
+  ([point1 point2 pow]
+   (->> (merge-with - point1 point2)
+     (valmap #(Math/pow % pow))
+     vals
+     (apply +)
+     (#(Math/pow % (/ 1 pow))))))
 
 ;;; Graph functions ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;; Alg4 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -225,29 +228,28 @@
   (keep #(some->> % (find dict1) key) (keys dict2)))
 
 (defn midpoint
+  [src dst]
+  (valmap #(/ % 2) (merge-with + src dst)))
+
+(defn graph-midpoint
   [graph src dest]
-  (let [src-loc (node-location graph src)
-        dst-loc (node-location graph dest)]
-    (reduce (fn [acc key]
-              (assoc acc key (/ (+
-                                  (get src-loc key)
-                                  (get dst-loc key))
-                                2)))
-            {}
-            (key-intersection src-loc dst-loc))))
+  (midpoint
+    (node-location graph src)
+    (node-location graph dst)))
 
 (defn points-in-circle
   "Takes an `uber/graph` and a `dict` center and `float` diameter for a circle
   and returns the number of points in the `uber/graph` in that circle."
   [graph center diameter]
-  (reduce (fn [count point]
+  (let [c (vals center)]
+   (reduce (fn [count point]
             (if (<=
-                  (lp-distance (vals center) (vals (node-location graph point)))
+                  (lp-distance c (node-location graph point))
                   diameter)
               (inc count)
               count))
           0
-          (uber/nodes graph)))
+          (uber/nodes graph))))
 
 ;; c^2 = a^2 + b^2 - 2ab * cos(C)
 ;; cos(C) = ( c^2 - a^2 - b^2 ) / (-2ab)
@@ -264,6 +266,10 @@
         angle (Math/acos (/
                            (- (Math/pow c 2) (Math/pow a 2) (Math/pow b 2))
                            (* -2 a b)))]
+    (print "\nA is " (str a))
+    (print "\nB is " (str b))
+    (print "\nC is " (str c))
+    (print "\nAngle is " (str angle))
     (if (>= angle 90)
       true
       false)))
@@ -360,7 +366,7 @@
   produces an `uber/graph` minimum spanning tree or `nil`."
   [graph k src dst]
   (let [mid      (midpoint src dst)
-        diameter (* (Math/sqrt 3) (lp-distance (vals src dst)))]
+        diameter (* (Math/sqrt 3) (lp-distance src dst))]
     (if (>= (points-in-circle graph mid diamater) k)
       ;; Suppose a square with side of length `diameter` centered around `mid`
       (min-potential-set graph mid diameter)
@@ -424,12 +430,12 @@
   "Takes a map with keys nodes, a map of node ids to :x, :y, :z coords, and edges, a seq of 2-element sequences of node ids. Returns a seq of [src dst metadata] vectors which can be passed as arguments to uber/graph."
   [{:keys [nodes edges]}]
   (map (fn [[src dst]]
-           [src
-            dst
-            {:length (apply lp-distance
-                            (map (comp coords-seq #(get nodes %))
-                                 [src dst]))}])
-         edges))
+         [src
+          dst
+          {:length (apply lp-distance
+                          (map #(get nodes %)
+                               [src dst]))}])
+       edges))
 
 (defn instantiate-graph
   [edges]
