@@ -406,9 +406,10 @@
 
 (defn parse-graph
   [graph-str]
+  "Parses a graph from a string with: node lines with an id as well as x, y, and z coordinates separated by spaces; an empty separator line; edge lines with two node ids. Returns a map of with keys nodes, a map of node ids to :x, :y, and :z coordinates, and edges, a seq of 2-element sequences of node ids."
   (let [[nodes edges] (map str/split-lines
                            (str/split graph-str #"\n\n"))
-        node-map      (reduce (fn [acc {:keys [id x y z]
+        nodes         (reduce (fn [acc {:keys [id x y z]
                                         :as   node}]
                                 (assoc acc
                                        id
@@ -416,12 +417,19 @@
                               {}
                               (map parse-node nodes))
         edges         (map parse-edge edges)]
-    (map (fn [{:keys [src dst]}]
+    {:nodes nodes
+     :edges edges}))
+
+(defn make-init-forms
+  "Takes a map with keys nodes, a map of node ids to :x, :y, :z coords, and edges, a seq of 2-element sequences of node ids. Returns a seq of [src dst metadata] vectors which can be passed as arguments to uber/graph."
+  [{:keys [nodes edges]}]
+  (map (fn [{:keys [src dst]}]
            [src
             dst
-            {:length (apply lp-distance (map (comp coords-seq #(get node-map %))
-                                             [src dst]))}])
-         edges)))
+            {:length (apply lp-distance
+                            (map (comp coords-seq #(get nodes %))
+                                 [src dst]))}])
+         edges))
 
 (defn instantiate-graph
   [edges]
@@ -433,6 +441,7 @@
   (-> location
     slurp
     parse-graph
+    make-init-forms
     instantiate-graph))
 
 ;;; Main ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
