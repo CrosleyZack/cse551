@@ -40,10 +40,10 @@
   ([point1 point2]
    (lp-distance point1 point2 2))
   ([point1 point2 pow]
-   (reduce (fn [acc [x y]]
-             (+ acc (Math/pow (- x y) 2)))
-           0
-           (map vector point1 point2))))
+   (Math/sqrt (reduce (fn [acc [x y]]
+                        (+ acc (Math/pow (- x y) 2)))
+                      0
+                      (map vector point1 point2)))))
 
 (defn add-all-edges
   "Takes an `uber/graph` and returns an `uber/graph` with edges between all nodes."
