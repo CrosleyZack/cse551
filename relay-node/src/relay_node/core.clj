@@ -461,42 +461,6 @@
 
 ;;; Main ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn weight-tree
-  [tree scaling-factor]
-  (reduce (fn [acc {:keys [src dest]
-                    :as   edge}]
-            (uber/add-attr acc
-                           src
-                           dest
-                           :weight
-                           (dec (Math/ceil
-                                  (/ (edge-value acc edge :length)
-                                     scaling-factor)))))
-          tree
-          (uber/edges tree)))
-
-(defn unidirectional-edges
-  [g]
-  (->> g
-    uber/edges
-    (filter :mirror?)))
-
-(defn max-edge-by
-  [g k]
-  (->> g
-    unidirectional-edges
-    (apply max-key #(edge-value g %))))
-
-(defn total-edge-weight
-  [g]
-  (reduce +
-          (map #(edge-value g %)
-               (unidirectional-edges g))))
-
-(defn remove-edge
-  [g e]
-  (uber/remove-edges* g [e]))
-
 (defn algorithm4
   "Algorithm 4 from the paper. Takes an `uber/graph` and returns an `uber/graph`
   representing a placement of relay nodes with the minimum number of connected
