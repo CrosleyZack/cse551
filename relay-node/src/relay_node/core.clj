@@ -46,14 +46,15 @@
 
 (defn randomly-locate-nodes
   "Takes an `uber/graph` and an `int` maximum value for axis values and assigns
-  x, y, and z coordinates for each."
+  x, y, and z coordinates for each.
+  Z coordinate is initialized to 0 as the points should all be in euclidean plane."
   [max-coord graph]
   (reduce (fn [acc node]
             (uber/add-attrs acc
                             node
-                            {:x (rand-int max-coord)
-                             :y (rand-int max-coord)
-                             :z (rand-int max-coord)}))
+                            {:x (rand max-coord)
+                             :y (rand max-coord)
+                             :z 0}))
           graph
           (uber/nodes graph)))
 
@@ -208,6 +209,7 @@
   [g e]
   (uber/remove-edges* g [e]))
 
+;; `TODO` figure out why this is producing bad results - all edges attached to first node.
 (defn minimum-spanning-tree
   "Takes a `uber/graph` and returns an `uber/graph` that is its minimum spanning tree.
   Implementation of Kruskal's algorithm."
@@ -244,7 +246,7 @@
   [graph src dest]
   (midpoint
     (node-location graph src)
-    (node-location graph dst)))
+    (node-location graph dest)))
 
 (defn points-in-circle
   "Takes an `uber/graph` and a `dict` center and `float` diameter for a circle
@@ -257,7 +259,6 @@
                   diameter)
               (inc count)
               count))
-          0
           (uber/nodes graph))))
 
 ;; c^2 = a^2 + b^2 - 2ab * cos(C)
@@ -267,33 +268,39 @@
   "Takes a `dict` point and two `dict` points indicating opposite square corners.
   Returns true if the first point is in the square contained in these two points.
   Checks if the point is contained by square by checking if the degree formed by
-  the three points is greater than 90."
+  the three points is greater than 90.
+  NOTE All three points must be in the same plane. If not, this won't produce proper results."
   [point top-left-corner bottom-right-corner]
   (let [a     (lp-distance point top-left-corner)
         b     (lp-distance point bottom-right-corner)
-        c     (lp-distance top-left-corner bottom-right-corner)
-        angle (Math/acos (/
-                           (- (Math/pow c 2) (Math/pow a 2) (Math/pow b 2))
-                           (* -2 a b)))]
-    (print "\nA is " (str a))
-    (print "\nB is " (str b))
-    (print "\nC is " (str c))
-    (print "\nAngle is " (str angle))
-    (if (>= angle 90)
-      true
-      false)))
+        c     (lp-distance top-left-corner bottom-right-corner)]
+    (as-> (/
+            (- (Math/pow c 2) (Math/pow a 2) (Math/pow b 2))
+            (* -2 a b)) $
+      (if (> $ 1)
+        1
+        $)
+      (if (< $ -1)
+        -1
+        $)
+      (Math/acos $)
+      (if (>= $ (/ Math/PI 2))
+        true
+        false))))
 
 (defn points-in-square
-  "Checks how many points fall in this square. An item
+    "Checks how many points fall in this square. An item
   falls in this square if the angle formed by top-left-corner,
   point, and bottom-right-corner is greater than or equal to
   90."
   [graph top-left-corner bottom-right-corner]
   (reduce (fn [acc point]
-            (let [p (node-location point)]
-              (if (point-in-square p top-left-corner bottom-right-corner)
+            (if (point-in-square
+                  (node-location graph point)
+                  top-left-corner
+                  bottom-right-corner)
                 (inc acc)
-                acc)))
+                acc))
           0
           (uber/nodes graph)))
 
@@ -303,11 +310,15 @@
    (point-exists-in-square graph top-left-corner bottom-right-corner (uber/nodes graph)))
   ([graph top-left-corner bottom-right-corner nodes]
    (if (empty? nodes)
-     false
-     (if (point-in-square (node-location (first nodes))
+     (do
+       (print "\nNo node in square " top-left-corner ", " bottom-right-corner)
+       false)
+     (if (point-in-square (node-location graph (first nodes))
                           top-left-corner
                           bottom-right-corner)
-       true
+       (do
+         (print "\n" (first nodes) " in square " top-left-corner ", " bottom-right-corner)
+         true)
        (recur graph top-left-corner bottom-right-corner (rest nodes))))))
 
 (defn grid-sizes
@@ -336,7 +347,7 @@
                          (zipmap [:x :y :z]
                                  deltas)))]
      (let [count    (/ edge-length grid-size)
-           halve    (/ edge-length 2)
+           halved   (/ edge-length 2)
            top-left (delta-merge center
                                  ((juxt - identity (constantly 0)) halved))]
        (for [i (range count)
@@ -350,25 +361,30 @@
   "takes an `uber/graph`, a `dict` square center, a `float` edge length, and a `float` grid
   size and produces a g-potential measure."
   [graph center edge-length grid-size]
-  (reduce (fn [acc [top-left-corner bottom-right-corner]]
+  (do
+   (print "\nG-Potential Called with :")
+   (print "\ncenter = " center)
+   (print "\nedge-length = " edge-length)
+   (print "\ngrid-size = " grid-size)
+   (reduce (fn [acc [top-left-corner bottom-right-corner]]
             (if (point-exists-in-square graph top-left-corner bottom-right-corner)
               (inc acc)
               acc))
           0
-          (cell-locations center edge-length grid-size)))
+          (cell-locations center edge-length grid-size))))
 
-(defn mid-potential-set
+(defn min-potential-set
   "Get the minimum potential item from the options. Still not sure what this really means...
   `TODO` Figure out what this really means."
   [graph center edge-length]
   (let [k (uber/count-nodes graph)]
     ;; `TODO` take the output of this reduction and return the one with minimum potential
     ;; `TODO` this is the wrong way to use take-while....
-    (-> (take-while #(<= edge-length %) (grid-sizes k edge-length))
-      (reduce (fn [acc grid-size]
+    (->> (take-while #(<= % edge-length) (grid-sizes k edge-length))
+         (reduce (fn [acc grid-size]
                 (assoc acc grid-size (g-potential graph center edge-length grid-size)))
               {})
-      (apply min-key val))))
+         (apply min-key val))))
 
 (defn get-mst-option
   "Takes an `uber/graph`, an `int` k, a source `uber/node` and destination `uber/node` and
