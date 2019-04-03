@@ -243,7 +243,7 @@
   (valmap #(/ % 2) (merge-with + src dst)))
 
 (defn graph-midpoint
-  [graph src dest]
+  [graph src dst]
   (midpoint
     (node-location graph src)
     (node-location graph dest)))
@@ -392,7 +392,7 @@
   [graph k src dst]
   (let [mid      (midpoint src dst)
         diameter (* (Math/sqrt 3) (lp-distance src dst))]
-    (if (>= (points-in-circle graph mid diamater) k)
+    (if (>= (points-in-circle graph mid diameter) k)
       ;; Suppose a square with side of length `diameter` centered around `mid`
       (min-potential-set graph mid diameter)
       ;; `TODO` write this section - get minimum potential set and the accompanying minimum spanning tree as an `uber/graph`.
