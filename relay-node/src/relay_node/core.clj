@@ -1,9 +1,9 @@
 (ns relay-node.core
   (:gen-class)
-  (:require [ubergraph.core :as uber]
-            [clojure.math.combinatorics :as combo]
+  (:require [ubergraph.core              :as uber]
+            [clojure.math.combinatorics  :as combo]
             [jordanlewis.data.union-find :as uf]
-            [clojure.string :as str]))
+            [clojure.string              :as str]))
 
 ;;; Non-domain utility functions. ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -31,11 +31,11 @@
                  (repeat 2 nodes))))
 
 (defn lp-distance
-  "Takes two number sequences of equal lenght and produces the euclidean distance"
+  "Takes two number sequences of equal length and produces the euclidean distance"
   ([point1 point2]
    (lp-distance point1 point2 2))
   ([point1 point2 pow]
-   (reduce (fn [acc [x, y]]
+   (reduce (fn [acc [x y]]
              (+ acc (Math/pow (- x y) 2)))
            0
            (map vector point1 point2))))
@@ -78,11 +78,25 @@
 (defn rand-full-graph
   "Create fully connected, random graph with random locations for each node and euclidean graph weights"
   [num-nodes max-coord]
+<<<<<<< HEAD
   (->> (nodes num-nodes)
     (apply uber/graph)
     (add-all-edges)
     (randomly-locate-nodes max-coord)
     (length-graph)))
+=======
+  (let [allnodes      (nodes num-nodes)
+        node-locs     (randomly-locate-nodes allnodes max-coord)
+        located-nodes (map (fn [x] [x (get node-locs x)])
+                           allnodes)]
+    (apply uber/graph
+           (reduce (fn [prev [src dst]]
+                     (conj prev
+                           [src dst {:length
+                                     (lp-distance (vals (get node-locs src)) (vals (get node-locs dst)))}]))
+                   located-nodes
+                   (get-edges allnodes)))))
+>>>>>>> Clean up code in a semantics-preserving fashion.
 
 ;;; Utility functions ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -405,11 +419,47 @@
   "Takes a `str` file location and returns the `uber/graph` specified by the file."
   [location]
   (-> location
-      slurp
-      parse-edges
-      instantiate-graph))
+    slurp
+    parse-graph
+    instantiate-graph))
 
 ;;; Main ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn weight-tree
+  [tree scaling-factor]
+  (reduce (fn [acc {:keys [src dest]
+                    :as   edge}]
+            (uber/add-attr acc
+                           src
+                           dest
+                           :weight
+                           (dec (Math/ceil
+                                  (/ (edge-value acc edge :length)
+                                     scaling-factor)))))
+          tree
+          (uber/edges tree)))
+
+(defn unidirectional-edges
+  [g]
+  (->> g
+    uber/edges
+    (filter :mirror?)))
+
+(defn max-edge-by
+  [g k]
+  (->> g
+    unidirectional-edges
+    (apply max-key #(edge-value g %))))
+
+(defn total-edge-weight
+  [g]
+  (reduce +
+          (map #(edge-value g %)
+               (unidirectional-edges g))))
+
+(defn remove-edge
+  [g e]
+  (uber/remove-edges* g [e]))
 
 (defn algorithm4
   "Algorithm 4 from the paper. Takes an `uber/graph` and returns an `uber/graph`
