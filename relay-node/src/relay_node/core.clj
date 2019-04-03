@@ -3,7 +3,8 @@
   (:require [ubergraph.core              :as uber]
             [clojure.math.combinatorics  :as combo]
             [jordanlewis.data.union-find :as uf]
-            [clojure.string              :as str]))
+            [clojure.string              :as str]
+            [clojure.edn                 :as edn]))
 
 ;;; Non-domain utility functions. ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -29,6 +30,10 @@
   (filter (fn [[src dst]] (not (= src dst)))
           (apply combo/cartesian-product
                  (repeat 2 nodes))))
+
+(defn coords-seq
+  [m]
+  ((juxt :x :y :z) m))
 
 (defn lp-distance
   "Takes two number sequences of equal length and produces the euclidean distance"
@@ -78,25 +83,11 @@
 (defn rand-full-graph
   "Create fully connected, random graph with random locations for each node and euclidean graph weights"
   [num-nodes max-coord]
-<<<<<<< HEAD
   (->> (nodes num-nodes)
     (apply uber/graph)
     (add-all-edges)
     (randomly-locate-nodes max-coord)
     (length-graph)))
-=======
-  (let [allnodes      (nodes num-nodes)
-        node-locs     (randomly-locate-nodes allnodes max-coord)
-        located-nodes (map (fn [x] [x (get node-locs x)])
-                           allnodes)]
-    (apply uber/graph
-           (reduce (fn [prev [src dst]]
-                     (conj prev
-                           [src dst {:length
-                                     (lp-distance (vals (get node-locs src)) (vals (get node-locs dst)))}]))
-                   located-nodes
-                   (get-edges allnodes)))))
->>>>>>> Clean up code in a semantics-preserving fashion.
 
 ;;; Utility functions ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -398,22 +389,43 @@
   [s]
   (str/split s #" +"))
 
-(defn parse-edge-line
-  [edge-line]
-  (let [[x y length] (tokenize edge-line)]
-    {:src    x
-     :dst    y
-     :length length}))
+(defn parse-node
+  [node-line]
+  (let [[node & coords] (tokenize node-line)
+        [x y z]         (map edn/read-string coords)]
+    {:id (keyword node)
+     :x  x
+     :y  y
+     :z  z}))
 
-(defn parse-edges
+(defn parse-edge
+  [edge-line]
+  (let [[a b] (tokenize edge-line)]
+    {:src (keyword a)
+     :dst (keyword b)}))
+
+(defn parse-graph
   [graph-str]
-  (map parse-edge-line
-       (str/split-lines graph-str)))
+  (let [[nodes edges] (map str/split-lines
+                           (str/split graph-str #"\n\n"))
+        node-map      (reduce (fn [acc {:keys [id x y z]
+                                        :as   node}]
+                                (assoc acc
+                                       id
+                                       node))
+                              {}
+                              (map parse-node nodes))
+        edges         (map parse-edge edges)]
+    (map (fn [{:keys [src dst]}]
+           [src
+            dst
+            {:length (apply lp-distance (map (comp coords-seq #(get node-map %))
+                                             [src dst]))}])
+         edges)))
 
 (defn instantiate-graph
   [edges]
-  (apply uber/graph (map (juxt :src :dst :length)
-                         edges)))
+  (apply uber/graph edges))
 
 (defn read-graph
   "Takes a `str` file location and returns the `uber/graph` specified by the file."
