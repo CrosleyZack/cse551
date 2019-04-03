@@ -302,23 +302,28 @@
   "Takes a `dict` center, an `int` edge-length, and a `float` grid size and produces top left
   corners of grid squares."
   ([center edge-length grid-size]
-   (let [count (/ edge-length grid-size)
-         halved (/ edge-length 2)
-         top-left (merge-with + center
-                              (zipmap [:x :y :z]
-                                      [(- halved) halved 0]))]
-     (for [i (range count)]
-      (for [j (range count)]
-        [(merge-with + top-left
-                     (zipmap [:x :y :z]
-                             [(* i grid-size)
-                              (- (* j grid-size))
-                              0]))
-        (merge-with + top-left
-                    (zipmap [:x :y :z]
-                            [(* (inc i) grid-size)
-                              (- (* (inc j) grid-size))
-                             0]))])))))
+   (letfn [(gen-deltas [loc i j]
+             (cond
+               (= loc :NW) [(* i grid-size)
+                            (- (* j grid-size))
+                            0]
+               ;; The southeast corner of the cell at i,j is also the northwest corner of the cell at i+1,j+1.
+               (= loc :SE) (recur :NW (inc i) (inc j))))
+           (delta-merge [m deltas]
+             (merge-with +
+                         m
+                         (zipmap [:x :y :z]
+                                 deltas)))]
+     (let [count    (/ edge-length grid-size)
+           halve    (/ edge-length 2)
+           top-left (delta-merge center
+                                 ((juxt - identity (constantly 0)) halved))]
+       (for [i (range count)
+             j (range count)]
+         [(delta-merge top-left
+                       (gen-deltas :NW i j))
+          (delta-merge top-left
+                       (gen-deltas :SE i j))])))))
 
 (defn g-potential
   "takes an `uber/graph`, a `dict` square center, a `float` edge length, and a `float` grid
