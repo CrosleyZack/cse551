@@ -401,8 +401,8 @@
 (defn parse-edge
   [edge-line]
   (let [[a b] (tokenize edge-line)]
-    {:src (keyword a)
-     :dst (keyword b)}))
+    [(keyword a)
+     (keyword b)]))
 
 (defn parse-graph
   [graph-str]
@@ -423,7 +423,7 @@
 (defn make-init-forms
   "Takes a map with keys nodes, a map of node ids to :x, :y, :z coords, and edges, a seq of 2-element sequences of node ids. Returns a seq of [src dst metadata] vectors which can be passed as arguments to uber/graph."
   [{:keys [nodes edges]}]
-  (map (fn [{:keys [src dst]}]
+  (map (fn [[src dst]]
            [src
             dst
             {:length (apply lp-distance
