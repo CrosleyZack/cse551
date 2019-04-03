@@ -2,6 +2,7 @@
   (:gen-class)
   (:require [ubergraph.core              :as uber]
             [clojure.math.combinatorics  :as combo]
+            [clojure.math.numeric-tower  :as math]
             [jordanlewis.data.union-find :as uf]
             [clojure.string              :as str]
             [clojure.edn                 :as edn]))
@@ -13,7 +14,9 @@
   (doseq [line lines]
      (apply println line)))
 
-(defn valmap [f m] (zipmap (keys m) (map f (vals m))))
+(defn valmap [f m]
+  (zipmap (keys m)
+          (map f (vals m))))
 
 ;;; Generate a random graph for testing ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -130,16 +133,22 @@
   [m]
   ((juxt :x :y :z) m))
 
+(defn raise-to
+  [pow n]
+  (math/expt n pow))
+
+(def reciprocal (partial / 1))
+
 (defn lp-distance
   "Takes two number sequences of equal length and produces the euclidean distance"
   ([point1 point2]
    (lp-distance point1 point2 2))
   ([point1 point2 pow]
    (->> (merge-with - point1 point2)
-     (valmap #(Math/pow % pow))
+     (valmap (partial raise-to pow))
      vals
-     (apply +)
-     (#(Math/pow % (/ 1 pow))))))
+     (reduce +)
+     (raise-to (reciprocal pow)))))
 
 ;;; Graph functions ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;; Alg4 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
