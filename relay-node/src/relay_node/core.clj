@@ -243,7 +243,7 @@
   (valmap #(/ % 2) (merge-with + src dst)))
 
 (defn graph-midpoint
-  [graph src dst]
+  [graph src dest]
   (midpoint
     (node-location graph src)
     (node-location graph dest)))
