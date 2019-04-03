@@ -252,9 +252,9 @@
   Checks if the point is contained by square by checking if the degree formed by
   the three points is greater than 90."
   [point top-left-corner bottom-right-corner]
-  (let [a (lp-distance point top-left-corner)
-        b (lp-distance point bottom-right-corner)
-        c (lp-distance top-left-corner bottom-right-corner)
+  (let [a     (lp-distance point top-left-corner)
+        b     (lp-distance point bottom-right-corner)
+        c     (lp-distance top-left-corner bottom-right-corner)
         angle (Math/acos (/
                            (- (Math/pow c 2) (Math/pow a 2) (Math/pow b 2))
                            (* -2 a b)))]
@@ -321,15 +321,15 @@
                              0]))])))))
 
 (defn g-potential
-"takes an `uber/graph`, a `dict` square center, a `float` edge length, and a `float` grid
+  "takes an `uber/graph`, a `dict` square center, a `float` edge length, and a `float` grid
   size and produces a g-potential measure."
-[graph center edge-length grid-size]
-(reduce (fn [acc [top-left-corner bottom-right-corner]]
-          (if (point-exists-in-square graph top-left-corner bottom-right-corner)
-            (inc acc)
-            acc))
-        0
-        (cell-locations center edge-length grid-size)))
+  [graph center edge-length grid-size]
+  (reduce (fn [acc [top-left-corner bottom-right-corner]]
+            (if (point-exists-in-square graph top-left-corner bottom-right-corner)
+              (inc acc)
+              acc))
+          0
+          (cell-locations center edge-length grid-size)))
 
 (defn mid-potential-set
   "Get the minimum potential item from the options. Still not sure what this really means...
@@ -354,7 +354,6 @@
       ;; Suppose a square with side of length `diameter` centered around `mid`
       (min-potential-set graph mid diameter)
       ;; `TODO` write this section - get minimum potential set and the accompanying minimum spanning tree as an `uber/graph`.
-      ()
       nil)))
 
 (defn k-minimum-spanning-tree
