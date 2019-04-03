@@ -145,8 +145,8 @@
    (lp-distance point1 point2 2))
   ([point1 point2 pow]
    (->> (merge-with - point1 point2)
-     (valmap (partial raise-to pow))
      vals
+     (map (partial raise-to pow))
      (reduce +)
      (raise-to (reciprocal pow)))))
 
