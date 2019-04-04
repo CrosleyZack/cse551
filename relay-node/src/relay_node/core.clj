@@ -243,10 +243,10 @@
   (valmap #(/ % 2) (merge-with + src dst)))
 
 (defn graph-midpoint
-  [graph src dest]
+  [graph src dst]
   (midpoint
     (node-location graph src)
-    (node-location graph dest)))
+    (node-location graph dst)))
 
 (defn points-in-circle
   "Takes an `uber/graph` and a `dict` center and `float` diameter for a circle
@@ -482,14 +482,14 @@
   representing a placement of relay nodes with the minimum number of connected
   components."
   [graph comm-range budget]
-  (let [mst      (minimum-spanning-tree graph)
-        weighted (atom (weight-tree mst comm-range))]
-    (while (> (total-edge-weight @weighted)
+  (let [graph (weight-tree graph comm-range)
+        mst   (atom (minimum-spanning-tree graph))]
+    (while (> (total-edge-weight @mst)
               budget)
-      (swap! weighted
+      (swap! mst
              remove-edge
-             (max-edge-by @weighted :weight)))
-    @weighted))
+             (max-edge-by @mst :weight)))
+    @mst))
 
 (defn algorithm5
   "Algorithm 5 from the paper. Takes an `uber/graph` and returns an `uber/graph`
