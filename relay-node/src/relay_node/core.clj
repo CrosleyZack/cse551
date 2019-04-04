@@ -19,69 +19,6 @@
   (zipmap (keys m)
           (map f (vals m))))
 
-;;; Generate a random graph for testing ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(defn nodes
-  "Returns node names for `int` number of nodes, default 26."
-  ([]
-   (nodes 26))
-  ([n]
-   (map (comp keyword str char)
-        (range 65 (+ 65 n)))))
-
-(defn get-edges
-  "Retrieves the edges that exist in a fully connected graph with the set of nodes.
-  Removes self referencial nodes."
-  [nodes]
-  (filter (fn [[src dst]] (not (= src dst)))
-          (apply combo/cartesian-product
-                 (repeat 2 nodes))))
-
-(defn add-all-edges
-  "Takes an `uber/graph` and returns an `uber/graph` with edges between all nodes."
-  [graph]
-  (reduce (fn [acc edge]
-            (uber/add-edges acc edge))
-          graph
-          (get-edges (uber/nodes graph))))
-
-(defn randomly-locate-nodes
-  "Takes an `uber/graph` and an `int` maximum value for axis values and assigns
-  x, y, and z coordinates for each.
-  Z coordinate is initialized to 0 as the points should all be in euclidean plane."
-  [max-coord graph]
-  (reduce (fn [acc node]
-            (uber/add-attrs acc
-                            node
-                            {:x (rand max-coord)
-                             :y (rand max-coord)
-                             :z 0}))
-          graph
-          (uber/nodes graph)))
-
-(defn length-graph
-  "Takes an `uber/graph` with (X,Y,Z) located nodes an returns an `uber/graph` with
-  length attributes on edges equal to the distance between the two points."
-  [graph]
-  (reduce (fn [acc {:keys [src dest]
-                    :as   edge}]
-            (uber/add-attr acc
-                           src
-                           dest
-                           :length
-                           (lp-distance (uber/attrs graph src) (uber/attrs graph dest))))
-          graph
-          (uber/edges graph)))
-
-(defn rand-full-graph
-  "Create fully connected, random graph with random locations for each node and euclidean graph weights"
-  [num-nodes max-coord]
-  (->> (nodes num-nodes)
-    (apply uber/graph)
-    (add-all-edges)
-    (randomly-locate-nodes max-coord)
-    (length-graph)))
-
 ;;; Utility functions ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn ds-from
@@ -151,6 +88,69 @@
      (map (partial raise-to pow))
      (reduce +)
      (raise-to (reciprocal pow)))))
+
+;;; Generate a random graph for testing ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn nodes
+  "Returns node names for `int` number of nodes, default 26."
+  ([]
+   (nodes 26))
+  ([n]
+   (map (comp keyword str char)
+        (range 65 (+ 65 n)))))
+
+(defn get-edges
+  "Retrieves the edges that exist in a fully connected graph with the set of nodes.
+  Removes self referencial nodes."
+  [nodes]
+  (filter (fn [[src dst]] (not (= src dst)))
+          (apply combo/cartesian-product
+                 (repeat 2 nodes))))
+
+(defn add-all-edges
+  "Takes an `uber/graph` and returns an `uber/graph` with edges between all nodes."
+  [graph]
+  (reduce (fn [acc edge]
+            (uber/add-edges acc edge))
+          graph
+          (get-edges (uber/nodes graph))))
+
+(defn randomly-locate-nodes
+  "Takes an `uber/graph` and an `int` maximum value for axis values and assigns
+  x, y, and z coordinates for each.
+  Z coordinate is initialized to 0 as the points should all be in euclidean plane."
+  [max-coord graph]
+  (reduce (fn [acc node]
+            (uber/add-attrs acc
+                            node
+                            {:x (rand max-coord)
+                             :y (rand max-coord)
+                             :z 0}))
+          graph
+          (uber/nodes graph)))
+
+(defn length-graph
+  "Takes an `uber/graph` with (X,Y,Z) located nodes an returns an `uber/graph` with
+  length attributes on edges equal to the distance between the two points."
+  [graph]
+  (reduce (fn [acc {:keys [src dest]
+                    :as   edge}]
+            (uber/add-attr acc
+                           src
+                           dest
+                           :length
+                           (lp-distance (uber/attrs graph src) (uber/attrs graph dest))))
+          graph
+          (uber/edges graph)))
+
+(defn rand-full-graph
+  "Create fully connected, random graph with random locations for each node and euclidean graph weights"
+  [num-nodes max-coord]
+  (->> (nodes num-nodes)
+    (apply uber/graph)
+    (add-all-edges)
+    (randomly-locate-nodes max-coord)
+    (length-graph)))
 
 ;;; Graph functions ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;; Alg4 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -291,16 +291,16 @@
       (Math/acos)
       (< (/ Math/PI 2)))))
 
-(defn points-in-square
-    "Checks how many points fall in this square. An item
-  falls in this square if the angle formed by top-left-corner,
-  point, and bottom-right-corner is greater than or equal to
-  90."
-  [graph top-left-corner bottom-right-corner]
-  (count (filter #(point-in-square (node-location graph %)
-                                   top-left-corner
-                                   bottom-right-corner)
-                 (uber/nodes graph))))
+;; (defn points-in-square
+;;     "Checks how many points fall in this square. An item
+;;   falls in this square if the angle formed by top-left-corner,
+;;   point, and bottom-right-corner is greater than or equal to
+;;   90."
+;;   [graph top-left-corner bottom-right-corner]
+;;   (count (filter #(point-in-square (node-location graph %)
+;;                                    top-left-corner
+;;                                    bottom-right-corner)
+;;                  (uber/nodes graph))))
 
 (defn point-exists-in-square
   "returns true the first encounter of a node in the square. Else returns false."
@@ -315,7 +315,8 @@
 
 (defn grid-sizes
   "Takes an `int` number of vertices and a `float` edge length to determine the size of a grid edge.
-  Lazy sequence produces multiple valid grid sizes which are chosen between."
+  Lazy sequence produces multiple valid grid sizes which are chosen between.
+  This value for grid sizes is under Definition 4.1 on page 4 of the garg paper."
   ([num-vertices edge-length]
    (grid-sizes num-vertices edge-length 1))
   ([num-vertices edge-length i]
@@ -324,7 +325,9 @@
 
 (defn cell-locations
   "Takes a `dict` center, an `int` edge-length, and a `float` grid size and produces top left
-  corners of grid squares."
+  corners of grid squares.
+  This is required for determining items in grids for `G_i-potential` calculation. Definition 4.1
+  on page 4 of the garg paper."
   ([center edge-length grid-size]
    (letfn [(gen-deltas [loc i j]
              (cond
@@ -351,19 +354,44 @@
 
 (defn g-potential
   "takes an `uber/graph`, a `dict` square center, a `float` edge length, and a `float` grid
-  size and produces a g-potential measure."
+  size and produces a g-potential measure.
+  Implementation of `G_i-potential`: Definition 4.1 on page 4 of the garg paper.
+  The stand-in for `i` is the `grid-size`, which is determined by "
   [graph center edge-length grid-size]
-  (do
-   (print "\nG-Potential Called with :")
-   (print "\ncenter = " center)
-   (print "\nedge-length = " edge-length)
-   (print "\ngrid-size = " grid-size)
-   (reduce (fn [acc [top-left-corner bottom-right-corner]]
-            (if (point-exists-in-square graph top-left-corner bottom-right-corner)
-              (inc acc)
-              acc))
-          0
-          (cell-locations center edge-length grid-size))))
+  (* grid-size
+     ;; Get the number of points in grid that contain a point of `graph`
+     (count (filter (fn [[tl br]] (point-exists-in-square
+                                  graph
+                                  tl
+                                  br))
+                    (cell-locations center edge-length grid-size)))))
+
+(defn set-potential
+  "Denoted `P(S)` in the paper on page 4.
+  Takes an `uber/graph` and an `int` k and returns sum of potentials for each grid size.
+  `edge-length` = d(i,j) for the circle formed between i,j with center `center`.
+  k = number of nodes, max-i = number of valid subgrid sizes."
+  [graph center edge-length k]
+  ;; `TODO` is this log or log_10? See Definition 4.2
+  ;; `NOTE` This is `log(k)` instead of `log(k) -1` outlined in the paper. This is
+  ;; because the paper gets the first log(k) items via indexes 0 to log(k)-1. In
+  ;; this implementation we take the first log(k) explicitly.
+  (let [max-i (Math/ceil (Math/log k))]
+    (->> (take max-i (grid-sizes k edge-length))
+      (map #(g-potential graph center k %))
+      (apply +))))
+
+;; (defn min-potential-set
+;;   "Takes an `uber/graph`, a `point` for the center of a square, and a `float` indicating
+;;   the length of a square edge.
+;;   Returns the minimum number of "
+;;   [graph center edge-length]
+;;   (apply min-key
+;;          #(set-potential graph
+;;                            center
+;;                            edge-length
+;;                            %)
+;;            (range 1 (inc (uber/count-nodes graph)))))
 
 (defn min-potential-set
   "Get the minimum potential item from the options. Still not sure what this really means...
@@ -405,6 +433,32 @@
             []
             ,,,)
     (min-key total-edge-weight ,,,)))
+
+(defn get-circle
+  [src dst]
+  [(midpoint src dst)
+   (* (Math/sqrt 3) (lp-distance src dst))])
+
+;; (defn get-square
+;;   [center edge-length]
+;;   (first (cell-locations center edge-length edge-length)))
+
+;; (defn minpot
+;;   [graph, k]
+;;   )
+
+(defn better-k-min-spanning-tree
+  [graph k]
+  (let [ret {}]
+    (for [[src dst] (get-edges (uber/nodes graph))]
+      (let [[mid diameter] (get-circle src dst)
+          ret {}]
+        (if (>= (points-in-circle graph mid diameter) k)
+          ;; `TODO` fill in the `,,,` sections.
+          (->> (minpot ,,,)
+            (minimum-spanning-tree ,,,)
+            (assoc ret [src dst])))))
+      (min-key ret ,,,,)))
 
 ;;; IO Functions ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
