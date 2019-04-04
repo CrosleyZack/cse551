@@ -311,17 +311,11 @@
   ([graph top-left-corner bottom-right-corner]
    (point-exists-in-square graph top-left-corner bottom-right-corner (uber/nodes graph)))
   ([graph top-left-corner bottom-right-corner nodes]
-   (if (empty? nodes)
-     (do
-       (print "\nNo node in square " top-left-corner ", " bottom-right-corner)
-       false)
-     (if (point-in-square (node-location graph (first nodes))
-                          top-left-corner
-                          bottom-right-corner)
-       (do
-         (print "\n" (first nodes) " in square " top-left-corner ", " bottom-right-corner)
-         true)
-       (recur graph top-left-corner bottom-right-corner (rest nodes))))))
+   (some #(point-in-square
+            %
+            top-left-corner
+            bottom-right-corner)
+         (map #(node-location graph %) nodes))))
 
 (defn grid-sizes
   "Takes an `int` number of vertices and a `float` edge length to determine the size of a grid edge.
