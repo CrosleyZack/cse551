@@ -436,8 +436,8 @@
      (keyword b)]))
 
 (defn parse-graph
-  [graph-str]
   "Parses a graph from a string with: node lines with an id as well as x, y, and z coordinates separated by spaces; an empty separator line; edge lines with two node ids. Returns a map of with keys nodes, a map of node ids to :x, :y, and :z coordinates, and edges, a seq of 2-element sequences of node ids."
+  [graph-str]
   (let [[nodes edges] (map str/split-lines
                            (str/split graph-str #"\n\n"))
         nodes         (reduce (fn [acc {:keys [id x y z]
