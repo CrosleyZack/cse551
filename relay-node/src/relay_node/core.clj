@@ -5,7 +5,8 @@
             [clojure.math.numeric-tower  :as math]
             [jordanlewis.data.union-find :as uf]
             [clojure.string              :as str]
-            [clojure.edn                 :as edn]))
+            [clojure.edn                 :as edn]
+            [clojure.core.match          :refer [match]]))
 
 ;;; Non-domain utility functions. ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -261,32 +262,34 @@
               count))
           (uber/nodes graph))))
 
+(defn clamp
+  [lower upper num]
+  (match ((juxt (partial < lower)
+                (partial > upper))
+          num)
+    [true  true ] num
+    [false _    ] lower
+    [_     false] upper))
+
 ;; c^2 = a^2 + b^2 - 2ab * cos(C)
 ;; cos(C) = ( c^2 - a^2 - b^2 ) / (-2ab)
 ;; C = cos^-1 (( c^2 - a^2 - b^2 ) / (-2ab))
 (defn point-in-square
   "Takes a `dict` point and two `dict` points indicating opposite square corners.
   Returns true if the first point is in the square contained in these two points.
-  Checks if the point is contained by square by checking if the degree formed by
-  the three points is greater than 90.
+  Checks if the point is contained by square by checking if the angle formed by
+  the three points is at least 90 degrees.
   NOTE All three points must be in the same plane. If not, this won't produce proper results."
   [point top-left-corner bottom-right-corner]
-  (let [a     (lp-distance point top-left-corner)
-        b     (lp-distance point bottom-right-corner)
-        c     (lp-distance top-left-corner bottom-right-corner)]
-    (as-> (/
-            (- (Math/pow c 2) (Math/pow a 2) (Math/pow b 2))
-            (* -2 a b)) $
-      (if (> $ 1)
-        1
-        $)
-      (if (< $ -1)
-        -1
-        $)
-      (Math/acos $)
-      (if (>= $ (/ Math/PI 2))
-        true
-        false))))
+  (let [a (lp-distance point top-left-corner)
+        b (lp-distance point bottom-right-corner)
+        c (lp-distance top-left-corner bottom-right-corner)]
+    (->> (/
+          (- (math/expt c 2) (math/expt a 2) (math/expt b 2))
+          (* -2 a b))
+      (clamp -1 1)
+      (Math/acos)
+      (< (/ Math/PI 2)))))
 
 (defn points-in-square
     "Checks how many points fall in this square. An item
@@ -294,15 +297,10 @@
   point, and bottom-right-corner is greater than or equal to
   90."
   [graph top-left-corner bottom-right-corner]
-  (reduce (fn [acc point]
-            (if (point-in-square
-                  (node-location graph point)
-                  top-left-corner
-                  bottom-right-corner)
-                (inc acc)
-                acc))
-          0
-          (uber/nodes graph)))
+  (count (filter #(point-in-square (node-location graph %)
+                                   top-left-corner
+                                   bottom-right-corner)
+                 (uber/nodes graph))))
 
 (defn point-exists-in-square
   "returns true the first encounter of a node in the square. Else returns false."

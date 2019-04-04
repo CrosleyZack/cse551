@@ -5,6 +5,7 @@
             :url  "https://www.eclipse.org/legal/epl-2.0/"}
   :dependencies [[org.clojure/clojure "1.10.0"]
                  [ubergraph "0.5.2"]
+                 [org.clojure/core.match "0.3.0"]
                  [org.clojure/math.numeric-tower "0.0.4"]
                  [org.clojure/math.combinatorics "0.1.4"]
                  [org.jordanlewis/data.union-find "0.1.0"]]
