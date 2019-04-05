@@ -89,6 +89,10 @@
   [coll]
   (atom (apply uf/union-find coll)))
 
+(defn ds-to-map
+  [ds-atom]
+  (edn/read-string (.toString @ds-atom)))
+
 (defn ds-get-canonical
   "Perform the get-canonical operation on a disjoint set but update
   the atom-backed representation as well to take advantage of path
