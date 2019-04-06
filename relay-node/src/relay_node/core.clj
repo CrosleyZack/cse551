@@ -1,19 +1,19 @@
-(ns relay-node.core
-  (:gen-class)
-  (:require [ubergraph.core              :as uber]
-            [clojure.math.combinatorics  :as combo]
-            [clojure.math.numeric-tower  :as math]
-            [jordanlewis.data.union-find :as uf]
-            [clojure.string              :as str]
-            [clojure.edn                 :as edn]
-            [clojure.core.match          :refer [match]]))
+ns relay-node.core
+(:gen-class)
+(:require [ubergraph.core              :as uber]
+          [clojure.math.combinatorics  :as combo]
+          [clojure.math.numeric-tower  :as math]
+          [jordanlewis.data.union-find :as uf]
+          [clojure.string              :as str]
+          [clojure.edn                 :as edn]
+          [clojure.core.match          :refer [match]])
 
 ;;; Non-domain utility functions. ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn print-lines
   [& lines]
   (doseq [line lines]
-     (apply println line)))
+    (apply println line)))
 
 (defn valmap [f m]
   (zipmap (keys m)
@@ -66,7 +66,7 @@
                    '[ds-get-canonical
                      ds-shared-root?
                      ds-union])]
-      ~@body))
+     ~@body))
 
 (defn coords-seq
   [m]
@@ -254,22 +254,22 @@
   and returns the number of points in the `uber/graph` in that circle."
   [graph center diameter]
   (let [c (vals center)]
-   (reduce (fn [count point]
-            (if (<=
-                  (lp-distance c (node-location graph point))
-                  diameter)
-              (inc count)
-              count))
-          (uber/nodes graph))))
+    (reduce (fn [count point]
+              (if (<=
+                    (lp-distance c (node-location graph point))
+                    diameter)
+                (inc count)
+                count))
+            (uber/nodes graph))))
 
 (defn clamp
   [lower upper num]
   (match ((juxt (partial < lower)
                 (partial > upper))
           num)
-    [true  true ] num
-    [false _    ] lower
-    [_     false] upper))
+         [true  true ] num
+         [false _    ] lower
+         [_     false] upper))
 
 ;; c^2 = a^2 + b^2 - 2ab * cos(C)
 ;; cos(C) = ( c^2 - a^2 - b^2 ) / (-2ab)
@@ -285,8 +285,8 @@
         b (lp-distance point bottom-right-corner)
         c (lp-distance top-left-corner bottom-right-corner)]
     (->> (/
-          (- (math/expt c 2) (math/expt a 2) (math/expt b 2))
-          (* -2 a b))
+           (- (math/expt c 2) (math/expt a 2) (math/expt b 2))
+           (* -2 a b))
       (clamp -1 1)
       (Math/acos)
       (< (/ Math/PI 2)))))
@@ -361,9 +361,9 @@
   (* grid-size
      ;; Get the number of points in grid that contain a point of `graph`
      (count (filter (fn [[tl br]] (point-exists-in-square
-                                  graph
-                                  tl
-                                  br))
+                                    graph
+                                    tl
+                                    br))
                     (cell-locations center edge-length grid-size)))))
 
 (defn set-potential
@@ -381,84 +381,52 @@
       (map #(g-potential graph center k %))
       (apply +))))
 
-;; (defn min-potential-set
-;;   "Takes an `uber/graph`, a `point` for the center of a square, and a `float` indicating
-;;   the length of a square edge.
-;;   Returns the minimum number of "
-;;   [graph center edge-length]
-;;   (apply min-key
-;;          #(set-potential graph
-;;                            center
-;;                            edge-length
-;;                            %)
-;;            (range 1 (inc (uber/count-nodes graph)))))
-
-(defn min-potential-set
-  "Get the minimum potential item from the options. Still not sure what this really means...
-  `TODO` Figure out what this really means."
-  [graph center edge-length]
-  (let [k (uber/count-nodes graph)]
-    ;; `TODO` take the output of this reduction and return the one with minimum potential
-    ;; `TODO` this is the wrong way to use take-while....
-    (->> (take-while #(<= % edge-length) (grid-sizes k edge-length))
-         (reduce (fn [acc grid-size]
-                (assoc acc grid-size (g-potential graph center edge-length grid-size)))
-              {})
-         (apply min-key val))))
-
-(defn get-mst-option
-  "Takes an `uber/graph`, an `int` k, a source `uber/node` and destination `uber/node` and
-  produces an `uber/graph` minimum spanning tree or `nil`."
-  [graph k src dst]
-  (let [mid      (midpoint src dst)
-        diameter (* (Math/sqrt 3) (lp-distance src dst))]
-    (if (>= (points-in-circle graph mid diameter) k)
-      ;; Suppose a square with side of length `diameter` centered around `mid`
-      (min-potential-set graph mid diameter)
-      ;; `TODO` write this section - get minimum potential set and the accompanying minimum spanning tree as an `uber/graph`.
-      nil)))
-
-(defn k-minimum-spanning-tree
-  "Takes a `uber/graph` and an `int` value `k` and returns an `uber/graph` that is the
-  minimum spanning tree with k vertices"
-  [graph k]
-  (->> graph
-    (uber/nodes ,,,)
-    (get-edges ,,,)
-    (reduce (fn [acc [src dst]]
-              (let [option (get-mst-option graph k src dst)]
-                (if option
-                  (conj acc option)
-                  acc)))
-            []
-            ,,,)
-    (min-key total-edge-weight ,,,)))
-
 (defn get-circle
   [src dst]
   [(midpoint src dst)
    (* (Math/sqrt 3) (lp-distance src dst))])
 
-;; (defn get-square
-;;   [center edge-length]
-;;   (first (cell-locations center edge-length edge-length)))
-
-;; (defn minpot
-;;   [graph, k]
-;;   )
+(defn minpot
+  [graph center diameter k]
+  ;; G_i indicates the i'th grid size. G_0
+  ;; foo
+  (let [l       {}
+        max-i   (Math/ceil (Math/log k))
+        [g_0 & g_r] (take (inc max-i)
+                          (grid-sizes k
+                                      diameter))]
+    (for [[tl br] (cell-locations center
+                                  diameter
+                                  g_0)
+          p       (range 1 max-i)]
+      (if (point-exists-in-square graph tl br)
+        ;; `TODO` this will not work - requires mutability.
+        ;; Point Exists - Set L(p) to be grid-size x_0.
+        (assoc l [0 p] g_0)
+        ;; No Point - Set L(p) to be infinity.
+        (assoc l [0 p] Double/POSITIVE_INFINITY)))
+    (for [i       (range 1 max-i)
+          [tl br] (cell-locations
+                    center
+                    diameter
+                    g_r)]
+      ;; `TODO` This will not work - requires mutability.
+      (assoc l [0 p] (min-key #(+ (get l [0 %])
+                                     (get l [i (- p %)]))
+                              (range 0 k))))))
 
 (defn better-k-min-spanning-tree
   [graph k]
   (let [ret {}]
     (for [[src dst] (get-edges (uber/nodes graph))]
       (let [[mid diameter] (get-circle src dst)
-          ret {}]
+            ret            {}]
         (if (>= (points-in-circle graph mid diameter) k)
           ;; `TODO` fill in the `,,,` sections.
           (->> (minpot ,,,)
             (minimum-spanning-tree ,,,)
             (assoc ret [src dst])))))
-      (min-key ret ,,,,)))
+    (min-key ret ,,,,)))
 
 ;;; IO Functions ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
