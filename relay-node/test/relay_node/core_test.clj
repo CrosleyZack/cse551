@@ -1,12 +1,12 @@
 (ns relay-node.core-test
   (:require [clojure.test :refer :all]
             [relay-node.core :refer :all]))
-             
+ ;TODO values for edges, com. range and budget should change (loc1 is correct)             
 (def loc1 {:nodes {:a {:x 0 :y 0 :z 0}
-                   :b {:x 3 :y 0 :z 0}
-                   :c {:x 0 :y 1 :z 0}
-                   :d {:x 2 :y 1 :z 0}
-                   :e {:x 1.8660 :y 0.5 :z 0}}
+                   :b {:x 36 :y 0 :z 0}
+                   :c {:x 0 :y 12 :z 0}
+                   :d {:x 24 :y 12 :z 0}
+                   :e {:x 34.392 :y 6 :z 0}}
            :edges [[:a :b]
                    [:a :c]
                    [:a :d]
@@ -59,15 +59,36 @@
         mst2 (minimum-spanning-tree graph2)
         mst3 (minimum-spanning-tree graph3)]
   
-  (is (= mst1 5))
+  (is (= mst1 54.2112))
   (is (= mst2 3))
   (is (= mst3 6)))
 
 (deftest algorithm4-check
-  (let [alg41 (algorithm4 graph1 1 3)
+  (let [alg41 (algorithm4 graph1 4 9)
         alg42 (algorithm4 graph2 1 3)
         alg43 (algorithm4 graph3 1 3)])
-  (is (= alg41 2))
+  (is (= alg41 7.551))
   (is (= alg42 2))
   (is (= alg43 2))
   )
+
+
+(def disjoint (ds-from [:a :b :c]))
+
+(deftest get-canonical-check
+  (is (= ds-get-canonical disjoint :a :a))
+  (is (= ds-get-canonical disjoint :b :b))
+  (is (= ds-get-canonical disjoint :c :c)))
+
+(ds-union disjoint :a :b)
+(deftest union
+  (is (= (ds-to-map disjoint) 
+         {:a [:a :b]
+          :c [:c]})))
+
+(deftest shared-root
+  (is (= (ds-shared-root? disjoint :a :c) false))
+  (is (= (ds-shared-root? disjoint :a :b) true)))
+
+
+  
