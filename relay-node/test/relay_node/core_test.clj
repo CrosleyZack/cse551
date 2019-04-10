@@ -1,7 +1,7 @@
 (ns relay-node.core-test
   (:require [clojure.test :refer :all]
             [relay-node.core :refer :all]))
- ;TODO values for edges, com. range and budget should change (loc1 is correct)             
+             
 (def loc1 {:nodes {:a {:x 0 :y 0 :z 0}
                    :b {:x 36 :y 0 :z 0}
                    :c {:x 0 :y 12 :z 0}
@@ -18,9 +18,9 @@
                    [:c :e]
                    [:d :e]]})
 (def loc2 {:node {:a {:x 0 :y 0 :z 0}
-                  :b {:x 2 :y 0 :z 0}
-                  :c {:x 0 :y 1 :z 0}
-                  :d {:x 2 :y 1 :z 0}}
+                  :b {:x 42 :y 0 :z 0}
+                  :c {:x 0 :y 21 :z 0}
+                  :d {:x 42 :y 21 :z 0}}
            :edges [[:a :b]
                    [:a :c]
                    [:a :d]
@@ -28,11 +28,11 @@
                    [:b :d]
                    [:c :d]]})
 (def loc3 {:node {:a {:x 0 :y 0 :z 0}
-                  :b {:x 1 :y 0 :z 0}
-                  :c {:x 2 :y 0 :z 0}
-                  :d {:x 0 :y 1 :z 0}
-                  :e {:x 1 :y 1 :z 0}
-                  :f {:x 2 :y 1 :z 0}}
+                  :b {:x 14 :y 0 :z 0}
+                  :c {:x 28 :y 0 :z 0}
+                  :d {:x 0 :y 14 :z 0}
+                  :e {:x 14 :y 14 :z 0}
+                  :f {:x 28 :y 14 :z 0}}
            :edges [[:a :b]
                    [:a :c]
                    [:a :d]
@@ -60,16 +60,16 @@
         mst3 (minimum-spanning-tree graph3)]
   
   (is (= mst1 54.2112))
-  (is (= mst2 3))
-  (is (= mst3 6)))
+  (is (= mst2 84))
+  (is (= mst3 70)))
 
 (deftest algorithm4-check
-  (let [alg41 (algorithm4 graph1 4 9)
-        alg42 (algorithm4 graph2 1 3)
-        alg43 (algorithm4 graph3 1 3)])
-  (is (= alg41 7.551))
-  (is (= alg42 2))
-  (is (= alg43 2))
+  (let [alg41 (algorithm4 graph1 2 18)
+        alg42 (algorithm4 graph2 3 21)
+        alg43 (algorithm4 graph3 2 21)])
+  (is (= alg41 15.102))
+  (is (= alg42 14))
+  (is (= alg43 14))
   )
 
 
