@@ -291,16 +291,13 @@ ns relay-node.core
       (Math/acos)
       (< (/ Math/PI 2)))))
 
-;; (defn points-in-square
-;;     "Checks how many points fall in this square. An item
-;;   falls in this square if the angle formed by top-left-corner,
-;;   point, and bottom-right-corner is greater than or equal to
-;;   90."
-;;   [graph top-left-corner bottom-right-corner]
-;;   (count (filter #(point-in-square (node-location graph %)
-;;                                    top-left-corner
-;;                                    bottom-right-corner)
-;;                  (uber/nodes graph))))
+(defn points-in-square
+  "Gets the set of all points which are in this square."
+  [graph top-left-corner bottom-right-corner]
+  (filter #(point-in-square (node-location graph %)
+                            top-left-corner
+                            bottom-right-corner)
+          (uber/nodes graph)))
 
 (defn point-exists-in-square
   "returns true the first encounter of a node in the square. Else returns false."
