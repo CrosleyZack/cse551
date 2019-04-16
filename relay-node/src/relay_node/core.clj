@@ -380,37 +380,59 @@ ns relay-node.core
 
 (defn get-circle
   [src dst]
-  [(midpoint src dst)
-   (* (Math/sqrt 3) (lp-distance src dst))])
+  (* (Math/sqrt 3) (lp-distance src dst)))
+
+(defn get-subcells
+  "Gets the four smaller cells that make up this cell."
+  [top-left bottom-right]
+  (let [size (/ (- (:x bottom-right) (:x top-left)) 2)
+        points [top-left
+                (merge-with top-left {:x size})
+                (merge-with top-left {:y size})
+                (merge-with top-left {:x size :y size})]]
+    (for [p points]
+      [p (merge-with {:x size :y size})])))
 
 (defn minpot
   [graph center diameter k]
   ;; G_i indicates the i'th grid size. G_0
-  ;; foo
-  (let [l       {}
-        max-i   (Math/ceil (Math/log k))
-        [g_0 & g_r] (take (inc max-i)
-                          (grid-sizes k
-                                      diameter))]
-    (for [[tl br] (cell-locations center
-                                  diameter
-                                  g_0)
-          p       (range 1 max-i)]
-      (if (point-exists-in-square graph tl br)
-        ;; `TODO` this will not work - requires mutability.
-        ;; Point Exists - Set L(p) to be grid-size x_0.
-        (assoc l [0 p] g_0)
-        ;; No Point - Set L(p) to be infinity.
-        (assoc l [0 p] Double/POSITIVE_INFINITY)))
-    (for [i       (range 1 max-i)
-          [tl br] (cell-locations
-                    center
-                    diameter
-                    g_r)]
-      ;; `TODO` This will not work - requires mutability.
-      (assoc l [0 p] (min-key #(+ (get l [0 %])
-                                     (get l [i (- p %)]))
-                              (range 0 k))))))
+  ;; Create an array of size `max-i` x `k` where k+1 is number of points.
+  ;; Array[i][j] = the minimum total potential for grids G_0 to G_i for any set of j points in this cell.
+  ;; We can have at most k points in any cell since that is the total count of points, though this will likely be much less.
+  ;; Array[i][j] = min_{|S| = p}(sum_{n=0}^{i}(G_n(S))) where S is the set of points in G_n
+  ;; In other words, Array[i][j] is the minimum of sum G_0 to G_i of S controlling the points in S.
+  ;; Note the first column is all 0, since you have zero elements.
+  ;; The first column can be created automatically. If a grid contains m points then it equals x_0, else infinity.
+  ;;    WHY? Not clear.
+  ;;
+  (let [l                              {}
+        num-grid-sizes                 (Math/ceil (Math/log k))
+        [grid-size-0 & grid-size-rest] (take (inc num-grid-sizes)
+                                             (grid-sizes k
+                                                         diameter))]
+    (do
+      (for [[tl br] (cell-locations center
+                                    diameter
+                                    grid-size-0)
+            p       (range 1 (inc k))]
+        (if (>= (count (point-in-square graph tl br) p)
+                ;; `TODO` this will not work - requires mutability.
+                ;; Point Exists - Set L(p) to be grid-size x_0.
+                (assoc-in l [0 [tl br] p] grid-size-0)
+                ;; No Point - Set L(p) to be infinity.
+                (assoc-in l [0 [tl br] p] Double/POSITIVE_INFINITY))))
+      (for [grid-size-index (range 1 num-grid-sizes)
+            [tl br]         (cell-locations
+                              center
+                              diameter
+                              (get grid-size-rest (dec grid-size-index)))]
+        ;; somehow we need an index in here
+        (assoc l [grid-size-index [tl br]]
+               (let [subcells (get-subcells tl br)
+                     temp     (get-in l [(dec grid-size-index) (first subcells)])]
+                 (for [[tl br] (rest subcells)
+                       i (range 0 (inc k))]
+                   (assoc temp i (min-key #(+ (get temp i) (get-in l [(dec grid-size-index) [tl br] i]))))))))))
 
 (defn better-k-min-spanning-tree
   [graph k]
