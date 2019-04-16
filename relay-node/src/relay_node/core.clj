@@ -387,11 +387,11 @@ ns relay-node.core
   [top-left bottom-right]
   (let [size (/ (- (:x bottom-right) (:x top-left)) 2)
         points [top-left
-                (merge-with top-left {:x size})
-                (merge-with top-left {:y size})
-                (merge-with top-left {:x size :y size})]]
+                (merge-with + top-left {:x size})
+                (merge-with + top-left {:y size})
+                (merge-with + top-left {:x size :y size})]]
     (for [p points]
-      [p (merge-with {:x size :y size})])))
+      [p (merge-with + {:x size :y size} p)])))
 
 (defn minpot
   [graph center diameter k]
