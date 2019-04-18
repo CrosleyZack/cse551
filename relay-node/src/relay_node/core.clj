@@ -393,8 +393,66 @@ ns relay-node.core
     (for [p points]
       [p (merge-with + {:x size :y size} p)])))
 
+(defn minpot-init
+  [{:keys [graph center diameter k]} x-0]
+  (apply merge
+         (for [[tl br] (cell-locations center
+                                       diameter
+                                       x_0)]
+           (let [points       (points-in-square graph tl br)
+                 m            (count points)
+                 remaining    (- (inc k) m)
+                 k-potentials (into [0]
+                                    (take m
+                                          (repeat x-0))
+                                    (take remaining
+                                          (repeat ##Inf)))]
+             {[tl br] k-potentials}))))
+
+(defn print-through
+  ([x]
+   (do (println x)
+       x))
+  ([prefix x]
+   (do (println prefix x)
+       x)))
+
+(defn frobulate
+  [flux-capacitor]
+  (if flux-capacitor
+    flux-capacitor
+    ##Inf))
+
+(defn four-partition
+  [n]
+  (for [w     (range (inc n))
+        x     (range (inc n))
+        y     (range (inc n))
+        z     (range (inc n))
+        :when (= n
+                 (+ w x y z))]
+    [w x y z]))
+
+(defn minimal-select
+  [{:keys [k]} p [l1 l2 l3 l4]]
+  (apply min (map (fn [[w x y z]]
+                    (+ (nth l1 w)
+                       (nth l2 x)
+                       (nth l3 y)
+                       (nth l4 z)))
+                  (four-partition p))))
+
+(defn construct-supercell
+  [{:keys [k x-i] :as state} subcell-potentials]
+  (let [partial-solution (atom (into [] (repeat k nil)))]
+    ;; Build up new potential list before adding current grid size.
+    (into [0]
+          (map #(+ (minimal-select state % subcell-potentials)
+                   x-i)
+               (range 1 (inc k))))))
+
 (defn minpot
-  [graph center diameter k]
+  [{:keys [graph center diameter k] :as state}]
   ;; G_i indicates the i'th grid size. G_0
   ;; Create an array of size `max-i` x `k` where k+1 is number of points.
   ;; Array[i][j] = the minimum total potential for grids G_0 to G_i for any set of j points in this cell.
@@ -405,34 +463,37 @@ ns relay-node.core
   ;; The first column can be created automatically. If a grid contains m points then it equals x_0, else infinity.
   ;;    WHY? Not clear.
   ;;
-  (let [l                              {}
-        num-grid-sizes                 (Math/ceil (Math/log k))
-        [grid-size-0 & grid-size-rest] (take (inc num-grid-sizes)
+  (let [num-grids                      (Math/ceil (Math/log k))
+        [grid-size-0 & grid-size-rest] (take (inc num-grids)
                                              (grid-sizes k
-                                                         diameter))]
-    (do
-      (for [[tl br] (cell-locations center
+                                                         diameter))
+        grids (into [(minpot-init state grid-size-0)]
+                    (repeat num-grids {}))]
+    (loop [acc grids
+           i 1
+           [[tl br] & rest-cells] (cell-locations
+                                    center
                                     diameter
-                                    grid-size-0)
-            p       (range 1 (inc k))]
-        (if (>= (count (point-in-square graph tl br) p)
-                ;; `TODO` this will not work - requires mutability.
-                ;; Point Exists - Set L(p) to be grid-size x_0.
-                (assoc-in l [0 [tl br] p] grid-size-0)
-                ;; No Point - Set L(p) to be infinity.
-                (assoc-in l [0 [tl br] p] Double/POSITIVE_INFINITY))))
-      (for [grid-size-index (range 1 num-grid-sizes)
-            [tl br]         (cell-locations
-                              center
-                              diameter
-                              (get grid-size-rest (dec grid-size-index)))]
-        ;; somehow we need an index in here
-        (assoc l [grid-size-index [tl br]]
-               (let [subcells (get-subcells tl br)
-                     temp     (get-in l [(dec grid-size-index) (first subcells)])]
-                 (for [[tl br] (rest subcells)
-                       i (range 0 (inc k))]
-                   (assoc temp i (min-key #(+ (get temp i) (get-in l [(dec grid-size-index) [tl br] i]))))))))))
+                                    (get grid-size-rest 0))]
+      (let [x-i (nth grid-size-rest (dec i))]
+        (if (some nil? [tl br])
+          (if (> i num-grids)
+            ;; Finished with all grids
+            acc
+            ;; Finished with current grid
+            (recur acc
+                   (inc i)
+                   (cell-locations
+                     center
+                     diameter
+                     (get grid-size-rest i))))
+          ;; Do the actual work
+          (recur (assoc-in acc [i [tl br]]
+                           (construct-supercell (assoc state :x-i x-i)
+                                                (map #(get-in [(dec i) %])
+                                                     (get-subcells tl br))))
+                 i
+                 rest-cells)))))
 
 (defn better-k-min-spanning-tree
   [graph k]
