@@ -592,7 +592,7 @@
   ([graph comm-range budget]
    (algorithm5 graph comm-range budget (uber/count-nodes graph)))
   ([graph comm-range budget k]
-   (let [kmst     (k-minimum-spanning-tree graph k)
+   (let [kmst     (k-min-spanning-tree graph k)
          weighted (weight-tree kmst comm-range)]
      (if (> (total-edge-weight weighted) budget)
        weighted
