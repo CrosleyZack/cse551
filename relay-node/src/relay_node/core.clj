@@ -1,12 +1,12 @@
-ns relay-node.core
-(:gen-class)
-(:require [ubergraph.core              :as uber]
-          [clojure.math.combinatorics  :as combo]
-          [clojure.math.numeric-tower  :as math]
-          [jordanlewis.data.union-find :as uf]
-          [clojure.string              :as str]
-          [clojure.edn                 :as edn]
-          [clojure.core.match          :refer [match]])
+(ns relay-node.core
+  (:gen-class)
+  (:require [ubergraph.core              :as uber]
+            [clojure.math.combinatorics  :as combo]
+            [clojure.math.numeric-tower  :as math]
+            [jordanlewis.data.union-find :as uf]
+            [clojure.string              :as str]
+            [clojure.edn                 :as edn]
+            [clojure.core.match          :refer [match]]))
 
 ;;; Non-domain utility functions. ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -385,7 +385,7 @@ ns relay-node.core
 (defn get-subcells
   "Gets the four smaller cells that make up this cell."
   [top-left bottom-right]
-  (let [size (/ (- (:x bottom-right) (:x top-left)) 2)
+  (let [size   (/ (- (:x bottom-right) (:x top-left)) 2)
         points [top-left
                 (merge-with + top-left {:x size})
                 (merge-with + top-left {:y size})
@@ -398,7 +398,7 @@ ns relay-node.core
   (apply merge
          (for [[tl br] (cell-locations center
                                        diameter
-                                       x_0)]
+                                       x-0)]
            (let [points       (points-in-square graph tl br)
                  m            (count points)
                  remaining    (- (inc k) m)
@@ -467,10 +467,10 @@ ns relay-node.core
         [grid-size-0 & grid-size-rest] (take (inc num-grids)
                                              (grid-sizes k
                                                          diameter))
-        grids (into [(minpot-init state grid-size-0)]
-                    (repeat num-grids {}))]
-    (loop [acc grids
-           i 1
+        grids                          (into [(minpot-init state grid-size-0)]
+                                             (repeat num-grids {}))]
+    (loop [acc                    grids
+           i                      1
            [[tl br] & rest-cells] (cell-locations
                                     center
                                     diameter
@@ -493,9 +493,9 @@ ns relay-node.core
                                                 (map #(get-in [(dec i) %])
                                                      (get-subcells tl br))))
                  i
-                 rest-cells)))))
+                 rest-cells))))))
 
-(defn better-k-min-spanning-tree
+(defn k-min-spanning-tree
   [graph k]
   (let [ret {}]
     (for [[src dst] (get-edges (uber/nodes graph))]
