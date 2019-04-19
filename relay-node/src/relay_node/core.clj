@@ -407,7 +407,8 @@
                                           (repeat x-0))
                                     (take remaining
                                           (repeat ##Inf)))]
-             {[tl br] k-potentials}))))
+             {[tl br] {:potentials k-potentials
+                       :points     points}}))))
 
 (defn print-through
   ([x]
@@ -435,20 +436,39 @@
 
 (defn minimal-select
   [{:keys [k]} p [l1 l2 l3 l4]]
-  (apply min (map (fn [[w x y z]]
-                    (+ (nth l1 w)
-                       (nth l2 x)
-                       (nth l3 y)
-                       (nth l4 z)))
-                  (four-partition p))))
+  (let [best-partition (apply min-key
+                              :potential
+                              (map (fn [[w x y z]]
+                                     {:partition [w x y z]
+                                      :subcells  [l1 l2 l3 l4]
+                                      :potential (reduce (fn [acc [l index]]
+                                                           (+ acc (get-in l [:potentials index])))
+                                                         0
+                                                         [[l1 w]
+                                                          [l2 x]
+                                                          [l2 y]
+                                                          [l2 z]])})
+                                   (four-partition p)))
+        chosen-points  ((comp vec
+                              flatten
+                              (fn [{:keys [partition subcells]}]
+                                (for [[num-points {:keys [points]}] (map vector
+                                                                         partition
+                                                                         subcells)]
+                                  (take num-points (shuffle points)))))
+                        best-partition)]
+    {:potential (:potential best-partition)
+     :points    chosen-points}))
 
 (defn construct-supercell
   [{:keys [k x-i] :as state} subcell-potentials]
   (let [partial-solution (atom (into [] (repeat k nil)))]
     ;; Build up new potential list before adding current grid size.
-    (into [0]
-          (map #(+ (minimal-select state % subcell-potentials)
-                   x-i)
+    (into [{:potential 0
+            :points    []}]
+          (map #(update (minimal-select state % subcell-potentials)
+                        :potential
+                        (partial + x-i))
                (range 1 (inc k))))))
 
 (defn minpot
