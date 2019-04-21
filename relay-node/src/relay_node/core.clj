@@ -498,7 +498,7 @@
            [[tl br] & rest-cells] (cell-locations
                                     center
                                     diameter
-                                    (get grid-size-rest 0))]
+                                    (first grid-size-rest))]
       (let [x-i (nth grid-size-rest (dec i))]
         (if (some nil? [tl br])
           (if (> i num-grids)
