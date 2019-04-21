@@ -406,19 +406,20 @@
 (defn minpot-init
   [{:keys [graph center diameter k]} x-0]
   (apply merge
-         (for [[tl br] (cell-locations center
-                                       diameter
-                                       x-0)]
-           (let [points       (points-in-square graph tl br)
-                 m            (count points)
-                 remaining    (- (inc k) m)
-                 k-potentials (into [0]
-                                    (take m
-                                          (repeat x-0))
-                                    (take remaining
-                                          (repeat ##Inf)))]
-             {[tl br] {:potentials k-potentials
-                       :points     points}}))))
+    (for [[tl br] (cell-locations center
+                                  diameter
+                                  x-0)]
+      (let [points       (points-in-square graph tl br)
+            m            (count points)
+            remaining    (- (inc k) m)
+            k-potentials (concat [0]
+                                 (take m
+                                       (repeat x-0))
+                                 (take remaining
+                                       (repeat ##Inf)))]
+        {[tl br] {:potentials k-potentials
+                  :points     points}}))))
+
 
 
 (defn frobulate
