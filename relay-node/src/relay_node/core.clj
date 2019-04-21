@@ -15,6 +15,14 @@
   (doseq [line lines]
     (apply println line)))
 
+(defn print-through
+  ([x]
+   (do (println x)
+       x))
+  ([prefix x]
+   (do (println prefix x)
+       x)))
+
 (defn valmap [f m]
   (zipmap (keys m)
           (map f (vals m))))
@@ -412,13 +420,6 @@
              {[tl br] {:potentials k-potentials
                        :points     points}}))))
 
-(defn print-through
-  ([x]
-   (do (println x)
-       x))
-  ([prefix x]
-   (do (println prefix x)
-       x)))
 
 (defn frobulate
   [flux-capacitor]
