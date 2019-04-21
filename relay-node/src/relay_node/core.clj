@@ -27,6 +27,9 @@
   (zipmap (keys m)
           (map f (vals m))))
 
+(defn log2 [n]
+  (/ (Math/log n) (Math/log 2)))
+
 ;;; Utility functions ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn ds-from
@@ -318,14 +321,16 @@
             bottom-right-corner)
          (map #(node-location graph %) nodes))))
 
+;; grid stuff. Something in here is wrong.
+
 (defn grid-sizes
   "Takes an `int` number of vertices and a `float` edge length to determine the size of a grid edge.
   Lazy sequence produces multiple valid grid sizes which are chosen between.
   This value for grid sizes is under Definition 4.1 on page 4 of the garg paper."
   ([num-vertices edge-length]
-   (grid-sizes num-vertices edge-length 1))
+   (take (Math/ceil (log2 num-vertices)) (grid-sizes num-vertices edge-length 0)))
   ([num-vertices edge-length i]
-   (lazy-seq (cons (* i (/ edge-length num-vertices))
+   (lazy-seq (cons (* (Math/pow 2 i) (/ edge-length num-vertices))
                    (grid-sizes num-vertices edge-length (inc i))))))
 
 (defn cell-locations
@@ -375,16 +380,14 @@
   "Denoted `P(S)` in the paper on page 4.
   Takes an `uber/graph` and an `int` k and returns sum of potentials for each grid size.
   `edge-length` = d(i,j) for the circle formed between i,j with center `center`.
-  k = number of nodes, max-i = number of valid subgrid sizes."
+  k = number of nodes"
   [graph center edge-length k]
-  ;; `TODO` is this log or log_10? See Definition 4.2
   ;; `NOTE` This is `log(k)` instead of `log(k) -1` outlined in the paper. This is
   ;; because the paper gets the first log(k) items via indexes 0 to log(k)-1. In
   ;; this implementation we take the first log(k) explicitly.
-  (let [max-i (Math/ceil (Math/log k))]
-    (->> (take max-i (grid-sizes k edge-length))
+  (->> (grid-sizes k edge-length)
       (map #(g-potential graph center k %))
-      (apply +))))
+      (apply +)))
 
 (defn get-circle
   ([graph src dst]
@@ -487,10 +490,8 @@
   ;; The first column can be created automatically. If a grid contains m points then it equals x_0, else infinity.
   ;;    WHY? Not clear.
   ;;
-  (let [num-grids                      (Math/ceil (Math/log k))
-        [grid-size-0 & grid-size-rest] (take (inc num-grids)
-                                             (grid-sizes k
-                                                         diameter))
+  (let [[grid-size-0 & grid-size-rest] (grid-sizes k diameter)
+        num-grids                      (inc (count grid-size-rest))
         grids                          (into [(minpot-init state grid-size-0)]
                                              (repeat num-grids {}))]
     (loop [acc                    grids
