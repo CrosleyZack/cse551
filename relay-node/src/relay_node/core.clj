@@ -379,8 +379,10 @@
       (apply +))))
 
 (defn get-circle
-  [src dst]
-  (* (Math/sqrt 3) (lp-distance src dst)))
+  ([graph src dst]
+   (get-circle (node-location graph src) (node-location graph dst)))
+  ([src dst]
+   [(midpoint src dst) (* (Math/sqrt 3) (lp-distance src dst))]))
 
 (defn get-subcells
   "Gets the four smaller cells that make up this cell."
