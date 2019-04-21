@@ -398,10 +398,10 @@
   (let [size   (/ (- (:x bottom-right) (:x top-left)) 2)
         points [top-left
                 (merge-with + top-left {:x size})
-                (merge-with + top-left {:y size})
-                (merge-with + top-left {:x size :y size})]]
+                (merge-with + top-left {:y (- size)})
+                (merge-with + top-left {:x size :y (- size)})]]
     (for [p points]
-      [p (merge-with + {:x size :y size} p)])))
+      [p (merge-with + {:x size :y (- size)} p)])))
 
 (defn minpot-init
   [{:keys [graph center diameter k]} x-0]
