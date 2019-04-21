@@ -510,7 +510,7 @@
                    (cell-locations
                      center
                      diameter
-                     (get grid-size-rest i))))
+                     (nth grid-size-rest i))))
           ;; Do the actual work
           (recur (assoc-in acc [i [tl br]]
                            (construct-supercell (assoc state :x-i x-i)
