@@ -420,119 +420,89 @@
     (for [p points]
       [p (merge-with + {:x size :y (- size)} p)])))
 
-(defn minpot-init
-  [{:keys [graph center diameter k]} x-0]
-  (apply merge
-         (for [[tl br] (cell-locations center
-                                       diameter
-                                       x-0)]
-           (let [points       (points-in-square graph tl br)
-                 m            (count points)
-                 remaining    (- (inc k) m)
-                 k-potentials (into [] (concat [0]
-                                               (take m
-                                                     (repeat x-0))
-                                               (take remaining
-                                                     (repeat ##Inf))))]
-             {[tl br] {:potentials k-potentials
-                       :points     points}}))))
+(defn get-base-potential
+  [{:keys [graph k]} [tl br]]
+  (let [points       (points-in-square graph tl br)
+        m            (count points)
+        remaining    (- (inc k) m)
+        k-potentials (into [] (concat [0]
+                                      (take m
+                                            (repeat (- (:x br) (:x tl))))
+                                      (take remaining
+                                            (repeat ##Inf))))]
+    {:potentials k-potentials
+     :points     points}))
 
 
+(defn get-base-potentials
+  [{:keys [graph k] :as state} cells potentials]
+  (reduce (fn [acc cell]
+              (assoc acc
+                     cell
+                     (get-base-potential state cell)))
+              potentials
+              cells))
 
-(defn frobulate
-  [flux-capacitor]
-  (if flux-capacitor
-    flux-capacitor
-    ##Inf))
+(defn potential-from-children
+  [{:keys [graph diameter k]} parent children potentials]
+  {:potentials (into [0]
+                         (for [i (range (inc k))]
+                          (+ diameter
+                             (apply min
+                                    (map
+                                      #(get-in potentials [% :potentials i])
+                                      children)))))
+       :points     (apply concat (map :points (map #(get potentials %) children)))})
 
-(defn four-partition
-  [n]
-  (for [w     (range (inc n))
-        x     (range (inc n))
-        y     (range (inc n))
-        z     (range (inc n))
-        :when (= n
-                 (+ w x y z))]
-    [w x y z]))
 
-(defn minimal-select
-  [{:keys [k]} p [l1 l2 l3 l4]]
-  (let [best-partition (apply min-key
-                              :potential
-                              (map (fn [[w x y z]]
-                                     {:partition [w x y z]
-                                      :subcells  [l1 l2 l3 l4]
-                                      :potential (reduce (fn [acc [l index]]
-                                                           (+ acc (get-in l [:potentials index])))
-                                                         0
-                                                         [[l1 w]
-                                                          [l2 x]
-                                                          [l2 y]
-                                                          [l2 z]])})
-                                   (four-partition p)))
-        chosen-points  ((comp vec
-                              flatten
-                              (fn [{:keys [partition subcells]}]
-                                (for [[num-points {:keys [points]}] (map vector
-                                                                         partition
-                                                                         subcells)]
-                                  (take num-points (shuffle points)))))
-                        best-partition)]
-    {:potential (:potential best-partition)
-     :points    chosen-points}))
-
-(defn construct-supercell
-  [{:keys [k x-i] :as state} subcell-potentials]
-  (let [partial-solution (atom (into [] (repeat k nil)))]
-    ;; Build up new potential list before adding current grid size.
-    (into [{:potential 0
-            :points    []}]
-          (map #(update (minimal-select state % subcell-potentials)
-                        :potential
-                        (partial + x-i))
-               (range 1 (inc k))))))
+(defn potentials-from-children
+  [{:keys [graph diameter k] :as state} nodes tree potentials]
+  (reduce (fn [acc node]
+            (assoc acc
+                   node
+                   (potential-from-children
+                     state
+                     node
+                     (get tree node)
+                     acc)))
+          potentials
+          nodes))
 
 (defn minpot
-  [{:keys [graph center diameter k] :as state}]
-  ;; G_i indicates the i'th grid size. G_0
-  ;; Create an array of size `max-i` x `k` where k+1 is number of points.
-  ;; Array[i][j] = the minimum total potential for grids G_0 to G_i for any set of j points in this cell.
-  ;; We can have at most k points in any cell since that is the total count of points, though this will likely be much less.
-  ;; Array[i][j] = min_{|S| = p}(sum_{n=0}^{i}(G_n(S))) where S is the set of points in G_n
-  ;; In other words, Array[i][j] is the minimum of sum G_0 to G_i of S controlling the points in S.
-  ;; Note the first column is all 0, since you have zero elements.
-  ;; The first column can be created automatically. If a grid contains m points then it equals x_0, else infinity.
-  ;;    WHY? Not clear.
-  ;;
-  (let [[grid-size-0 & grid-size-rest] (grid-sizes k diameter)
-        num-grids                      (inc (count grid-size-rest))
-        grids                          (into [(minpot-init state grid-size-0)]
-                                             (repeat num-grids {}))]
-    (loop [acc                    grids
-           i                      1
-           [[tl br] & rest-cells] (cell-locations
+  ([{:keys [graph center diameter k] :as state}]
+   (let [[root tree] (grid-cell-map (count (uber/nodes graph))
                                     center
-                                    diameter
-                                    (first grid-size-rest))]
-      (let [x-i (nth grid-size-rest (dec i))]
-        (if (some nil? [tl br])
-          (if (> i num-grids)
-            ;; Finished with all grids
-            acc
-            ;; Finished with current grid
-            (recur acc
-                   (inc i)
-                   (cell-locations
-                     center
-                     diameter
-                     (nth grid-size-rest i))))
-          ;; Do the actual work
-          (recur (assoc-in acc [i [tl br]]
-                           (construct-supercell (assoc state :x-i x-i)
-                                                (map #(get-in [(dec i) %])
-                                                     (get-subcells tl br))))
-                 i
-                 rest-cells))))))
+                                    diameter)]
+     (minpot state [root] tree {})))
+  ([{:keys [graph center diameter k] :as state} current-nodes tree potentials]
+   (let [children (reduce (fn [acc node] (into acc (get tree node)))
+                          []
+                          current-nodes)]
+     (if (= 0 (count children))
+       (get-base-potentials state current-nodes potentials)
+       (do
+         (->> (minpot state children tree potentials)
+           (potentials-from-children state current-nodes tree)))))))
+
+
+;; End Zack's minpot -----------------------------------------
+
+(defn test-minpot
+  [num-nodes max-coords comm-range]
+  (let [graph                          (weight-tree (rand-full-graph num-nodes max-coords) comm-range)
+        [src dst]                      (first (get-edges (uber/nodes graph)))
+        [mid diameter]                 (get-circle graph src dst)
+        state                          {:graph graph :center mid :diameter diameter :k num-nodes}
+        [grid-size-0 & grid-size-rest] (grid-sizes num-nodes diameter)
+        num-grids                      (inc (count grid-size-rest))]
+    (uber/pprint graph)
+    (print "\nCircle\n")
+    (print src "---" diameter "----[" mid "]--->" dst)
+    (print "\nnum-grids = " num-grids)
+    (print "\nfirst grid size = " grid-size-0)
+    (minpot state)
+    ;;(minpot-init state grid-size-0)
+    ))
 
 (defn k-min-spanning-tree
   [graph k]
