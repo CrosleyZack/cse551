@@ -322,14 +322,15 @@
                    (grid-sizes num-vertices edge-length (inc i))))))
 
 (defn grid-cell-map
+  "Get the root and tree for grid subdivisions."
   ([num-vertices center diameter]
    (let [[tl br] (first (cell-locations center diameter diameter))]
-     (grid-cell-map center
-                    diameter
-                    (/ diameter num-vertices)
-                    tl
-                    br
-                    {})))
+     [[tl br] (grid-cell-map center
+                             diameter
+                             (/ diameter num-vertices)
+                             tl
+                             br
+                             {})]))
   ([center diameter lower-bound tl br cell-map]
    (if (< diameter lower-bound)
      cell-map
