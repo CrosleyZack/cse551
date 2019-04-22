@@ -282,25 +282,13 @@
          [false _    ] lower
          [_     false] upper))
 
-;; c^2 = a^2 + b^2 - 2ab * cos(C)
-;; cos(C) = ( c^2 - a^2 - b^2 ) / (-2ab)
-;; C = cos^-1 (( c^2 - a^2 - b^2 ) / (-2ab))
+
 (defn point-in-square
-  "Takes a `dict` point and two `dict` points indicating opposite square corners.
-  Returns true if the first point is in the square contained in these two points.
-  Checks if the point is contained by square by checking if the angle formed by
-  the three points is at least 90 degrees.
-  NOTE All three points must be in the same plane. If not, this won't produce proper results."
   [point top-left-corner bottom-right-corner]
-  (let [a (lp-distance point top-left-corner)
-        b (lp-distance point bottom-right-corner)
-        c (lp-distance top-left-corner bottom-right-corner)]
-    (->> (/
-           (- (math/expt c 2) (math/expt a 2) (math/expt b 2))
-           (* -2 a b))
-      (clamp -1 1)
-      (Math/acos)
-      (< (/ Math/PI 2)))))
+  (and (<= (:x point) (:x bottom-right-corner))
+       (>= (:x point) (:x top-left-corner))
+       (<= (:y point) (:y top-left-corner))
+       (>= (:y point) (:y bottom-right-corner))))
 
 (defn points-in-square
   "Gets the set of all points which are in this square."
