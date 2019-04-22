@@ -480,9 +480,8 @@
                           current-nodes)]
      (if (= 0 (count children))
        (get-base-potentials state current-nodes potentials)
-       (do
-         (->> (minpot state children tree potentials)
-           (potentials-from-children state current-nodes tree)))))))
+       (->> (minpot state children tree potentials)
+           (potentials-from-children state current-nodes tree))))))
 
 
 ;; End Zack's minpot -----------------------------------------
