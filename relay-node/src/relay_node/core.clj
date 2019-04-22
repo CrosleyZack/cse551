@@ -333,6 +333,31 @@
    (lazy-seq (cons (* (Math/pow 2 i) (/ edge-length num-vertices))
                    (grid-sizes num-vertices edge-length (inc i))))))
 
+(defn grid-cell-map
+  ([num-vertices center diameter]
+   (let [[tl br] (first (cell-locations center diameter diameter))]
+     (grid-cell-map center
+                    diameter
+                    (/ diameter num-vertices)
+                    tl
+                    br
+                    {})))
+  ([center diameter lower-bound tl br cell-map]
+   (if (< diameter lower-bound)
+     cell-map
+     (let [subcells (get-subcells tl br)]
+       (assoc (reduce (fn [acc [new-tl new-br]]
+                        (grid-cell-map (midpoint new-tl new-br)
+                                       (/ diameter 2)
+                                       lower-bound
+                                       new-tl
+                                       new-br
+                                       acc))
+                      cell-map
+                      subcells)
+              [tl br]
+              subcells)))))
+
 (defn cell-locations
   "Takes a `dict` center, an `int` edge-length, and a `float` grid size and produces top left
   corners of grid squares.
