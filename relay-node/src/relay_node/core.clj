@@ -376,6 +376,17 @@
           (delta-merge top-left
                        (gen-deltas :SE i j))])))))
 
+(defn get-subcells
+  "Gets the four smaller cells that make up this cell."
+  [top-left bottom-right]
+  (let [size   (/ (- (:x bottom-right) (:x top-left)) 2)
+        points [top-left
+                (merge-with + top-left {:x size})
+                (merge-with + top-left {:y (- size)})
+                (merge-with + top-left {:x size :y (- size)})]]
+    (for [p points]
+      [p (merge-with + {:x size :y (- size)} p)])))
+
 (defn g-potential
   "takes an `uber/graph`, a `dict` square center, a `float` edge length, and a `float` grid
   size and produces a g-potential measure.
@@ -409,16 +420,6 @@
   ([src dst]
    [(midpoint src dst) (* (Math/sqrt 3) (lp-distance src dst))]))
 
-(defn get-subcells
-  "Gets the four smaller cells that make up this cell."
-  [top-left bottom-right]
-  (let [size   (/ (- (:x bottom-right) (:x top-left)) 2)
-        points [top-left
-                (merge-with + top-left {:x size})
-                (merge-with + top-left {:y (- size)})
-                (merge-with + top-left {:x size :y (- size)})]]
-    (for [p points]
-      [p (merge-with + {:x size :y (- size)} p)])))
 
 (defn get-base-potential
   [{:keys [graph k]} [tl br]]
