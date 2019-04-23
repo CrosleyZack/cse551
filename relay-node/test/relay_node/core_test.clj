@@ -3,6 +3,13 @@
             [relay-node.core :refer :all]
             [ubergraph.core :as uber]))
 
+(def loc0 {:nodes {:a {:x 0 :y 0 :z 0}
+                   :b {:x 10 :y 0 :z 0}
+                   :c {:x 0 :y 10 :z 0}}
+           :edges [[:a :b]
+                   [:a :c]
+                   [:b :c]]})
+
 (def loc1 {:nodes {:a {:x 0 :y 0 :z 0}
                    :b {:x 36 :y 0 :z 0}
                    :c {:x 0 :y 12 :z 0}
