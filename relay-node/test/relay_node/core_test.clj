@@ -1,7 +1,8 @@
 (ns relay-node.core-test
   (:require [clojure.test :refer :all]
-            [relay-node.core :refer :all]))
-             
+            [relay-node.core :refer :all]
+            [ubergraph.core :as uber]))
+
 (def loc1 {:nodes {:a {:x 0 :y 0 :z 0}
                    :b {:x 36 :y 0 :z 0}
                    :c {:x 0 :y 12 :z 0}
@@ -17,7 +18,7 @@
                    [:c :d]
                    [:c :e]
                    [:d :e]]})
-(def loc2 {:node {:a {:x 0 :y 0 :z 0}
+(def loc2 {:nodes {:a {:x 0 :y 0 :z 0}
                   :b {:x 42 :y 0 :z 0}
                   :c {:x 0 :y 21 :z 0}
                   :d {:x 42 :y 21 :z 0}}
@@ -27,7 +28,7 @@
                    [:b :c]
                    [:b :d]
                    [:c :d]]})
-(def loc3 {:node {:a {:x 0 :y 0 :z 0}
+(def loc3 {:nodes {:a {:x 0 :y 0 :z 0}
                   :b {:x 14 :y 0 :z 0}
                   :c {:x 28 :y 0 :z 0}
                   :d {:x 0 :y 14 :z 0}
@@ -49,28 +50,31 @@
                    [:d :f]
                    [:e :f]]})
 
+(defn mst
+  [loc]
+  (->> loc
+    read-in-graph
+    minimum-spanning-tree))
 
-   
+(defn mst-weight
+  [loc]
+  (->> loc
+    mst
+    total-edge-weight))
+
 (deftest mst-cal
-  (let [graph1 (instantiate-graph (make-init-forms loc1))
-        graph2 (instantiate-graph (make-init-forms loc2))
-        graph3 (instantiate-graph (make-init-forms loc3))])
-  (let [mst1 (minimum-spanning-tree graph1)
-        mst2 (minimum-spanning-tree graph2)
-        mst3 (minimum-spanning-tree graph3)]
-  
-  (is (= mst1 54.2112))
-  (is (= mst2 84))
-  (is (= mst3 70)))
+   (is (=  54.2112 (mst-weight loc1)))
+   (is (= 84 (mst-weight loc2)))
+   (is (=  70 (mst-weight loc3))))
 
-(deftest algorithm4-check
-  (let [alg41 (algorithm4 graph1 2 18)
-        alg42 (algorithm4 graph2 3 21)
-        alg43 (algorithm4 graph3 2 21)])
-  (is (= alg41 15.102))
-  (is (= alg42 14))
-  (is (= alg43 14))
-  )
+;; (deftest algorithm4-check
+;;   (let [alg41 (algorithm4 graph1 2 18)
+;;         alg42 (algorithm4 graph2 3 21)
+;;         alg43 (algorithm4 graph3 2 21)])
+;;   (is (= alg41 15.102))
+;;   (is (= alg42 14))
+;;   (is (= alg43 14))
+;;   )
 
 
 (def disjoint (ds-from [:a :b :c]))

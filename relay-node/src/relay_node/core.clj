@@ -111,27 +111,43 @@
           (apply combo/cartesian-product
                  (repeat 2 nodes))))
 
+(defn add-edges
+  [graph edges]
+  (reduce (fn [acc edge]
+            (uber/add-edges acc edge))
+            graph
+            edges))
+
 (defn add-all-edges
   "Takes an `uber/graph` and returns an `uber/graph` with edges between all nodes."
   [graph]
-  (reduce (fn [acc edge]
-            (uber/add-edges acc edge))
+  (add-edges graph (get-edges (uber/nodes graph))))
+
+(defn locate-nodes
+  [graph loc-map]
+  (reduce (fn [acc node]
+            (uber/add-attrs acc
+                            node
+                            (get loc-map node)))
           graph
-          (get-edges (uber/nodes graph))))
+          (uber/nodes graph)))
 
 (defn randomly-locate-nodes
   "Takes an `uber/graph` and an `int` maximum value for axis values and assigns
   x, y, and z coordinates for each.
   Z coordinate is initialized to 0 as the points should all be in euclidean plane."
   [max-coord graph]
-  (reduce (fn [acc node]
-            (uber/add-attrs acc
-                            node
-                            {:x (rand max-coord)
-                             :y (rand max-coord)
-                             :z 0}))
-          graph
-          (uber/nodes graph)))
+  (->> (reduce (fn [acc node]
+                 (assoc acc
+                        node
+                        {:x (rand max-coord)
+                         :y (rand max-coord)}
+                        :z 0))
+               {}
+               (uber/nodes graph))
+    (locate-nodes graph)))
+
+
 
 (defn length-graph
   "Takes an `uber/graph` with (X,Y,Z) located nodes an returns an `uber/graph` with
@@ -205,10 +221,12 @@
     (apply max-key #(edge-value g %))))
 
 (defn total-edge-weight
-  [g]
-  (reduce +
-          (map #(edge-value g %)
-               (unidirectional-edges g))))
+  ([g]
+   (total-edge-weight g :length))
+  ([g edge-property]
+   (reduce +
+           (map #(edge-value g % edge-property)
+                (unidirectional-edges g)))))
 
 (defn remove-edge
   [g e]
@@ -500,6 +518,16 @@
         edges         (map parse-edge edges)]
     {:nodes nodes
      :edges edges}))
+
+
+(defn read-in-graph
+  "Like Max's, but actually works."
+  [{:keys [nodes edges]}]
+  (as-> (keys nodes) $
+    (apply uber/graph $)
+    (locate-nodes $ nodes)
+    (add-edges $ edges)
+    (length-graph $)))
 
 (defn make-init-forms
   "Takes a map with keys nodes, a map of node ids to :x, :y, :z coords, and edges, a seq of 2-element sequences of node ids. Returns a seq of [src dst metadata] vectors which can be passed as arguments to uber/graph."
