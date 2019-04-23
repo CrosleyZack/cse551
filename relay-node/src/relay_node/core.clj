@@ -603,8 +603,7 @@
   (-> location
     slurp
     parse-graph
-    make-init-forms
-    instantiate-graph))
+    read-in-graph))
 
 ;;; Main ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
