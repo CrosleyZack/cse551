@@ -509,12 +509,14 @@
   (let [ret {}]
     (for [[src dst] (get-edges (uber/nodes graph))]
       (let [[mid diameter] (get-circle src dst)
-            ret            {}]
+            ret            {}
+            state          {:graph graph :center mid :diameter diameter :k k}]
         (if (>= (points-in-circle graph mid diameter) k)
-          ;; `TODO` fill in the `,,,` sections.
-          (->> (minpot ,,,)
+          (->> (minpot state)
+            ;; TODO create the minimum spanning tree from this min potential set.
             (minimum-spanning-tree ,,,)
             (assoc ret [src dst])))))
+    ;; TODO get the minimum spanning tree with minimum weight
     (min-key ret ,,,,)))
 
 ;;; IO Functions ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
