@@ -27,6 +27,10 @@
   (zipmap (keys m)
           (map f (vals m))))
 
+(defn key-intersection
+  [dict1 dict2]
+  (keep #(some->> % (find dict1) key) (keys dict2)))
+
 (defn log2 [n]
   (/ (Math/log n) (Math/log 2)))
 
@@ -79,10 +83,6 @@
                      ds-union])]
      ~@body))
 
-(defn coords-seq
-  [m]
-  ((juxt :x :y :z) m))
-
 (defn raise-to
   [pow n]
   (math/expt n pow))
@@ -102,7 +102,7 @@
 
 ;;; Generate a random graph for testing ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn nodes
+(defn node-names
   "Returns node names for `int` number of nodes, default 26."
   ([]
    (nodes 26))
@@ -157,7 +157,7 @@
 (defn rand-full-graph
   "Create fully connected, random graph with random locations for each node and euclidean graph weights"
   [num-nodes max-coord]
-  (->> (nodes num-nodes)
+  (->> (node-names num-nodes)
     (apply uber/graph)
     (add-all-edges)
     (randomly-locate-nodes max-coord)
@@ -246,10 +246,6 @@
   [graph node]
   (uber/attrs graph node))
 
-(defn key-intersection
-  [dict1 dict2]
-  (keep #(some->> % (find dict1) key) (keys dict2)))
-
 (defn midpoint
   [src dst]
   (valmap #(/ % 2) (merge-with + src dst)))
@@ -321,31 +317,16 @@
    (lazy-seq (cons (* (Math/pow 2 i) (/ edge-length num-vertices))
                    (grid-sizes num-vertices edge-length (inc i))))))
 
-(defn grid-cell-map
-  "Get the root and tree for grid subdivisions."
-  ([num-vertices center diameter]
-   (let [[tl br] (first (cell-locations center diameter diameter))]
-     [[tl br] (grid-cell-map center
-                             diameter
-                             (/ diameter num-vertices)
-                             tl
-                             br
-                             {})]))
-  ([center diameter lower-bound tl br cell-map]
-   (if (< diameter lower-bound)
-     cell-map
-     (let [subcells (get-subcells tl br)]
-       (assoc (reduce (fn [acc [new-tl new-br]]
-                        (grid-cell-map (midpoint new-tl new-br)
-                                       (/ diameter 2)
-                                       lower-bound
-                                       new-tl
-                                       new-br
-                                       acc))
-                      cell-map
-                      subcells)
-              [tl br]
-              subcells)))))
+(defn get-subcells
+  "Gets the four smaller cells that make up this cell."
+  [top-left bottom-right]
+  (let [size   (/ (- (:x bottom-right) (:x top-left)) 2)
+        points [top-left
+                (merge-with + top-left {:x size})
+                (merge-with + top-left {:y (- size)})
+                (merge-with + top-left {:x size :y (- size)})]]
+    (for [p points]
+      [p (merge-with + {:x size :y (- size)} p)])))
 
 (defn cell-locations
   "Takes a `dict` center, an `int` edge-length, and a `float` grid size and produces top left
@@ -376,17 +357,33 @@
           (delta-merge top-left
                        (gen-deltas :SE i j))])))))
 
-(defn get-subcells
-  "Gets the four smaller cells that make up this cell."
-  [top-left bottom-right]
-  (let [size   (/ (- (:x bottom-right) (:x top-left)) 2)
-        points [top-left
-                (merge-with + top-left {:x size})
-                (merge-with + top-left {:y (- size)})
-                (merge-with + top-left {:x size :y (- size)})]]
-    (for [p points]
-      [p (merge-with + {:x size :y (- size)} p)])))
+(defn grid-cell-map
+  "Get the root and tree for grid subdivisions."
+  ([num-vertices center diameter]
+   (let [[tl br] (first (cell-locations center diameter diameter))]
+     [[tl br] (grid-cell-map center
+                             diameter
+                             (/ diameter num-vertices)
+                             tl
+                             br
+                             {})]))
+  ([center diameter lower-bound tl br cell-map]
+   (if (< diameter lower-bound)
+     cell-map
+     (let [subcells (get-subcells tl br)]
+       (assoc (reduce (fn [acc [new-tl new-br]]
+                        (grid-cell-map (midpoint new-tl new-br)
+                                       (/ diameter 2)
+                                       lower-bound
+                                       new-tl
+                                       new-br
+                                       acc))
+                      cell-map
+                      subcells)
+              [tl br]
+              subcells)))))
 
+;; TODO this is never used. Do we need this function?
 (defn g-potential
   "takes an `uber/graph`, a `dict` square center, a `float` edge length, and a `float` grid
   size and produces a g-potential measure.
@@ -401,6 +398,7 @@
                                     br))
                     (cell-locations center edge-length grid-size)))))
 
+;; TODO this is never used. Do we need this function?
 (defn set-potential
   "Denoted `P(S)` in the paper on page 4.
   Takes an `uber/graph` and an `int` k and returns sum of potentials for each grid size.
