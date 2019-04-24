@@ -477,11 +477,11 @@
 
 (defn grid-cell-map
   "Get the root and tree for grid subdivisions."
-  ([num-vertices center diameter]
+  ([k center diameter]
    (let [[tl br] (first (cell-locations center diameter diameter))]
      [[tl br] (grid-cell-map center
                              diameter
-                             (/ diameter num-vertices)
+                             (/ diameter k)
                              tl
                              br
                              {})]))
@@ -560,7 +560,7 @@
 
 (defn minpot
   ([{:keys [graph center diameter k] :as state}]
-   (let [[root tree] (grid-cell-map (count (uber/nodes graph))
+   (let [[root tree] (grid-cell-map k
                                     center
                                     diameter)]
      (get (minpot state [root] tree {}) root)))
