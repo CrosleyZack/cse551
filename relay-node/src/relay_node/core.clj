@@ -602,12 +602,18 @@
      (print "No such tree could be found! Reached k=1, which has no minimum spanning tree.")
      (let [kmst     (k-min-spanning-tree graph k)
            weighted (weight-tree kmst comm-range)]
-       (println "k = " k)
        (if (> (total-edge-weight weighted) budget)
          (recur graph comm-range budget (dec k))
          weighted)))))
 
 ;;; Main ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn graph-execution-times
+  [max-nodes max-coords comm-range budget]
+  (map #(as-> % $
+              (rand-full-graph $ max-coords)
+              (time (algorithm5 $ comm-range budget)))
+          (range 2 (inc max-nodes))))
 
 (def cli-options
   "Parse the command line arguments"
