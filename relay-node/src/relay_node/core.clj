@@ -297,7 +297,7 @@
      :edges edges}))
 
 
-(defn read-in-graph
+(defn init-graph
   "Like Max's, but actually works."
   [{:keys [nodes edges]}]
   (as-> (keys nodes) $
@@ -306,13 +306,18 @@
     (add-edges $ edges)
     (length-graph $)))
 
+(defn make-graph
+  [graph-str]
+  (-> graph-str
+    parse-graph
+    init-graph))
+
 (defn read-graph
   "Takes a `str` file location and returns the `uber/graph` specified by the file."
   [location]
   (-> location
     slurp
-    parse-graph
-    read-in-graph))
+    make-graph))
 
 
 ;;;;; Alg4 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
