@@ -550,20 +550,20 @@
 
 (defn k-min-spanning-tree
   [graph k]
-  (apply min-key total-edge-weight
-         (filter #(= k (count (uber/nodes %)))
-                 (for [[src dst] (get-edges (uber/nodes graph))]
-                   (let [[mid diameter] (apply get-circle
-                                               (map (partial node-location graph)
-                                                    [src dst]))
-                         state          {:graph graph :center mid :diameter diameter :k k}]
-                     (-> state
-                       minpot
-                       (get k)
-                       :points
-                       (->> (into #{})
-                         (induced-subgraph graph))
-                       minimum-spanning-tree))))))
+  (->> (for [[src dst] (get-edges (uber/nodes graph))]
+         (let [[mid diameter] (apply get-circle
+                                     (map (partial node-location graph)
+                                          [src dst]))
+               state          {:graph graph :center mid :diameter diameter :k k}]
+           (-> state
+             minpot
+             (get k)
+             :points
+             (->> (into #{})
+               (induced-subgraph graph))
+             minimum-spanning-tree)))
+    (filter #(= k (count (uber/nodes %))))
+    (apply min-key total-edge-weight)))
 
 ;;; IO Functions ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -663,10 +663,6 @@
      (if (> (total-edge-weight weighted) budget)
        weighted
        (recur graph comm-range budget (dec k))))))
-;; (-> graph
-;;   (k-minimum-spanning-tree k)
-;;   (weight-tree comm-range)
-;;   (if (> (total-edge-weight ))))))
 
 (defn -main
   " Read in graphs and run algorithms. "
