@@ -522,7 +522,7 @@
      :edges edges}))
 
 
-(defn read-in-graph
+(defn init-graph
   "Like Max's, but actually works."
   [{:keys [nodes edges]}]
   (as-> (keys nodes) $
@@ -531,28 +531,18 @@
     (add-edges $ edges)
     (length-graph $)))
 
-(defn make-init-forms
-  "Takes a map with keys nodes, a map of node ids to :x, :y, :z coords, and edges, a seq of 2-element sequences of node ids. Returns a seq of [src dst metadata] vectors which can be passed as arguments to uber/graph."
-  [{:keys [nodes edges]}]
-  (map (fn [[src dst]]
-         [src
-          dst
-          {:length (apply lp-distance
-                          (map #(get nodes %)
-                               [src dst]))}])
-       edges))
-
-(defn instantiate-graph
-  [edges]
-  (apply uber/graph edges))
+(defn make-graph
+  [graph-str]
+  (-> graph-str
+    parse-graph
+    init-graph))
 
 (defn read-graph
   "Takes a `str` file location and returns the `uber/graph` specified by the file."
   [location]
   (-> location
     slurp
-    parse-graph
-    read-in-graph))
+    make-graph))
 
 ;;; Main ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
