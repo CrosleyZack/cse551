@@ -105,7 +105,7 @@
 (defn node-names
   "Returns node names for `int` number of nodes, default 26."
   ([]
-   (nodes 26))
+   (node-names 26))
   ([n]
    (map (comp keyword str char)
         (range 65 (+ 65 n)))))
