@@ -469,18 +469,18 @@
 ;;   [graph, k]
 ;;   )
 
-(defn better-k-min-spanning-tree
-  [graph k]
-  (let [ret {}]
-    (for [[src dst] (get-edges (uber/nodes graph))]
-      (let [[mid diameter] (get-circle src dst)
-          ret {}]
-        (if (>= (points-in-circle graph mid diameter) k)
-          ;; `TODO` fill in the `,,,` sections.
-          (->> (minpot ,,,)
-            (minimum-spanning-tree ,,,)
-            (assoc ret [src dst])))))
-      (min-key ret ,,,,)))
+;; (defn better-k-min-spanning-tree
+;;   [graph k]
+;;   (let [ret {}]
+;;     (for [[src dst] (get-edges (uber/nodes graph))]
+;;       (let [[mid diameter] (get-circle src dst)
+;;           ret {}]
+;;         (if (>= (points-in-circle graph mid diameter) k)
+;;           ;; `TODO` fill in the `,,,` sections.
+;;           (->> (minpot ,,,)
+;;             (minimum-spanning-tree ,,,)
+;;             (assoc ret [src dst])))))
+;;       (min-key ret ,,,,)))
 
 ;;; IO Functions ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
