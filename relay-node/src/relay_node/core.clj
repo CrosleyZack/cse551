@@ -6,7 +6,8 @@
             [jordanlewis.data.union-find :as uf]
             [clojure.string              :as str]
             [clojure.edn                 :as edn]
-            [clojure.core.match          :refer [match]]))
+            [clojure.core.match          :refer [match]]
+            [clojure.tools.cli :refer [parse-opts]]))
 
 ;;; Non-domain utility functions. ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -603,8 +604,27 @@
 
 ;;; Main ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(def cli-options
+  "Parse the command line arguments"
+  [;; optional file to read in graph from.
+   ["-f" "--file FILE" "File containing a graph encoding. Optional, as the graph could be passed in as string using `-g`"
+    ;;:parse-fn read-graph
+    ;;:validate [#(.exists (clojure.java.io/as-file %)) "The file specified must exist."]
+    ]
+   ;; optional string graph. TODO does our parse function work here?
+   ["-g" "--graph GRAPH" "String containing a graph encoding. Optional, as the graph could be passed in as a file using `-f`"]
+   ;; Required communications range
+   ["-c" "--comm-range FLOAT" "Required floating point comm range for Algorithm 4 and Algorithm 5."
+    :parse-fn #(Float/parseFloat %)
+    :validate [#(> % 0) "Communication range must be greater than zero."]]
+   ;; Required budget
+   ["-b" "--budget FLOAT" "Required floating point budget for producing sensor placement."
+    :parse-fn #(Float/parseFloat %)
+    :validate [#(> % 0) "Budget must be greater than zero."]]
+   ;; Help
+   ["-h" "--help"]])
 
 (defn -main
   " Read in graphs and run algorithms. "
   [& args]
-  (println "Hello, World!"))
+  (parse-opts args cli-options))
