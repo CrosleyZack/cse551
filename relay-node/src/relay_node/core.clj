@@ -439,64 +439,6 @@
     (for [p points]
       [p (merge-with + {:x size :y (- size)} p)])))
 
-(defn cell-locations
-  "Takes a `dict` center, an `int` edge-length, and a `float` grid size and produces top left
-  corners of grid squares.
-  This is required for determining items in grids for `G_i-potential` calculation. Definition 4.1
-  on page 4 of the garg paper."
-  ([center edge-length grid-size]
-   (letfn [(gen-deltas [loc i j]
-             (cond
-               (= loc :NW) [(* i grid-size)
-                            (- (* j grid-size))
-                            0]
-               ;; The southeast corner of the cell at i,j is also the northwest corner of the cell at i+1,j+1.
-               (= loc :SE) (recur :NW (inc i) (inc j))))
-           (delta-merge [m deltas]
-             (merge-with +
-                         m
-                         (zipmap [:x :y :z]
-                                 deltas)))]
-     (let [count    (/ edge-length grid-size)
-           halved   (/ edge-length 2)
-           top-left (delta-merge center
-                                 ((juxt - identity (constantly 0)) halved))]
-       (for [i (range count)
-             j (range count)]
-         [(delta-merge top-left
-                       (gen-deltas :NW i j))
-          (delta-merge top-left
-                       (gen-deltas :SE i j))])))))
-;; TODO this is never used. Do we need this function?
-(defn g-potential
-  "takes an `uber/graph`, a `dict` square center, a `float` edge length, and a `float` grid
-  size and produces a g-potential measure.
-  Implementation of `G_i-potential`: Definition 4.1 on page 4 of the garg paper.
-  The stand-in for `i` is the `grid-size`, which is determined by "
-  [graph center edge-length grid-size]
-  (* grid-size
-     ;; Get the number of points in grid that contain a point of `graph`
-     (count (filter (fn [[tl br]] (point-exists-in-square
-                                    graph
-                                    tl
-                                    br))
-                    (cell-locations center edge-length grid-size)))))
-
-;; TODO this is never used. Do we need this function?
-(defn set-potential
-  "Denoted `P(S)` in the paper on page 4.
-  Takes an `uber/graph` and an `int` k and returns sum of potentials for each grid size.
-  `edge-length` = d(i,j) for the circle formed between i,j with center `center`.
-  k = number of nodes"
-  [graph center edge-length k]
-  ;; `NOTE` This is `log(k)` instead of `log(k) -1` outlined in the paper. This is
-  ;; because the paper gets the first log(k) items via indexes 0 to log(k)-1. In
-  ;; this implementation we take the first log(k) explicitly.
-  (->> (grid-sizes k edge-length)
-    (map #(g-potential graph center k %))
-    (apply +)))
-
-
 (defn grid-cell-map
   "Get the root and tree for grid subdivisions."
   ([num-vertices center diameter]
