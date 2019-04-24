@@ -168,7 +168,7 @@
   [graph]
   (->> graph
     (unidirectional-edges)
-    (sort #(compare (edge-value graph %1) (edge-value graph %2)))))
+    (sort #(compare (edge-value graph %1 :length) (edge-value graph %2 :length)))))
 
 (defn total-edge-weight
   ([g]
