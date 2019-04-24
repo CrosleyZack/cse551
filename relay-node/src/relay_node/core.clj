@@ -180,6 +180,16 @@
     (length-graph)))
 
 ;;; Graph functions ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn induced-subgraph
+  [g vertices]
+  (apply uber/graph
+         (->> g
+           uber/edges
+           (filter #(->> %
+                      ((juxt :src :dest))
+                      (every? vertices))))))
+
 ;;;;; Alg4 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn unidirectional-edges
@@ -260,6 +270,16 @@
 
 ;;;;; Alg5 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(defn four-partitions
+  [n]
+  (for [w     (range (inc n))
+        x     (range (inc n))
+        y     (range (inc n))
+        z     (range (inc n))
+        :when (= n
+                 (+ w x y z))]
+    [w x y z]))
+
 (defn node-location
   [graph node]
   (uber/attrs graph node))
@@ -299,10 +319,8 @@
 
 (defn point-in-square
   [point top-left-corner bottom-right-corner]
-  (and (<= (:x point) (:x bottom-right-corner))
-       (>= (:x point) (:x top-left-corner))
-       (<= (:y point) (:y top-left-corner))
-       (>= (:y point) (:y bottom-right-corner))))
+  (and (<= (:x top-left-corner)     (:x point) (:x bottom-right-corner))
+       (<= (:y bottom-right-corner) (:y point) (:y top-left-corner))))
 
 (defn points-in-square
   "Gets the set of all points which are in this square."
@@ -427,8 +445,8 @@
   ;; because the paper gets the first log(k) items via indexes 0 to log(k)-1. In
   ;; this implementation we take the first log(k) explicitly.
   (->> (grid-sizes k edge-length)
-      (map #(g-potential graph center k %))
-      (apply +)))
+    (map #(g-potential graph center k %))
+    (apply +)))
 
 (defn get-circle
   ([graph src dst]
@@ -439,38 +457,48 @@
 
 (defn get-base-potential
   [{:keys [graph k]} [tl br]]
-  (let [points       (points-in-square graph tl br)
-        m            (count points)
-        remaining    (- (inc k) m)
-        k-potentials (into [] (concat [0]
-                                      (take m
-                                            (repeat (- (:x br) (:x tl))))
-                                      (take remaining
-                                            (repeat ##Inf))))]
-    {:potentials k-potentials
-     :points     points}))
+  (let [points    (points-in-square graph tl br)
+        m         (count points)
+        remaining (- (inc k) m)
+        x-i       (- (:x br) (:x tl))]
+    (vec (concat [{:potential 0
+                   :points    []}]
+                 (map
+                   #(assoc {:potential x-i}
+                           :points
+                           (take % points))
+                   (range 1 (inc m)))
+                 (take remaining
+                       (repeat {:potential ##Inf
+                                :points    []}))))))
 
 
 (defn get-base-potentials
   [{:keys [graph k] :as state} cells potentials]
   (reduce (fn [acc cell]
-              (assoc acc
-                     cell
-                     (get-base-potential state cell)))
-              potentials
-              cells))
+            (assoc acc
+                   cell
+                   (get-base-potential state cell)))
+          potentials
+          cells))
 
 (defn potential-from-children
   [{:keys [graph diameter k]} parent children potentials]
-  {:potentials (into [0]
-                         (for [i (range (inc k))]
-                          (+ diameter
-                             (apply min
-                                    (map
-                                      #(get-in potentials [% :potentials i])
-                                      children)))))
-       :points     (apply concat (map :points (map #(get potentials %) children)))})
-
+  (letfn [(combine [& args]
+            (apply (if (sequential? (first args)) concat +)
+                   args))]
+    (into [{:potential 0
+            :points    []}]
+          (map (fn [p]
+                 (->> p
+                   four-partitions
+                   (map (fn [partition]
+                          (->> (map (partial get potentials) children)
+                            (#(map get % partition))
+                            (reduce (partial merge-with combine)))))
+                   (apply min-key :potential)
+                   (#(update % :potential + (math/abs (apply - (map :x parent)))))))
+               (range 1 (inc k))))))
 
 (defn potentials-from-children
   [{:keys [graph diameter k] :as state} nodes tree potentials]
@@ -490,7 +518,7 @@
    (let [[root tree] (grid-cell-map (count (uber/nodes graph))
                                     center
                                     diameter)]
-     (minpot state [root] tree {})))
+     (get (minpot state [root] tree {}) root)))
   ([{:keys [graph center diameter k] :as state} current-nodes tree potentials]
    (let [children (reduce (fn [acc node] (into acc (get tree node)))
                           []
@@ -498,7 +526,7 @@
      (if (= 0 (count children))
        (get-base-potentials state current-nodes potentials)
        (->> (minpot state children tree potentials)
-           (potentials-from-children state current-nodes tree))))))
+         (potentials-from-children state current-nodes tree))))))
 
 
 ;; End Zack's minpot -----------------------------------------
@@ -522,18 +550,20 @@
 
 (defn k-min-spanning-tree
   [graph k]
-  (let [ret {}]
-    (for [[src dst] (get-edges (uber/nodes graph))]
-      (let [[mid diameter] (get-circle src dst)
-            ret            {}
-            state          {:graph graph :center mid :diameter diameter :k k}]
-        (if (>= (points-in-circle graph mid diameter) k)
-          (->> (minpot state)
-            ;; TODO create the minimum spanning tree from this min potential set.
-            (minimum-spanning-tree ,,,)
-            (assoc ret [src dst])))))
-    ;; TODO get the minimum spanning tree with minimum weight
-    (min-key ret ,,,,)))
+  (apply min-key total-edge-weight
+         (filter #(= k (count (uber/nodes %)))
+                 (for [[src dst] (get-edges (uber/nodes graph))]
+                   (let [[mid diameter] (apply get-circle
+                                               (map (partial node-location graph)
+                                                    [src dst]))
+                         state          {:graph graph :center mid :diameter diameter :k k}]
+                     (-> state
+                       minpot
+                       (get k)
+                       :points
+                       (->> (into #{})
+                         (induced-subgraph graph))
+                       minimum-spanning-tree))))))
 
 ;;; IO Functions ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
