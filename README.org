@@ -1,9 +1,61 @@
-* CSE 551 Project
-** Project for Fundamentals of Algorithms written in Clojure
+* Project for CSE 551 Fundamentals of Algorithms
+** Written in Clojure!
+   https://clojure.org/
+** Execution Instructions
+   On execution the program will run both algorithm4 (Budget Constrained Relay node Placement with Minimum Number of Connected Components) and algorithm5 (Budget Constrained Relay node Placement with Maximum size of Largest Connected Component) on the parameters provided.
+
+   `TODO` instructions here.
+** Command Line Interface
+   The command line interface takes a graph, a communication range, and a budget. Please use the sections below for further clarification on the way to specify each parameter. If in doubt, `--help` or `-h` at the prompt will give you a list of all these options.
+
+*** Graph Encoding
+    The graph is encoded as a string with space and newline delimiters for easy entry.
+    A line specifying a node will have three space-delimited items. The first will be a string node name. This can just be a character like `A`. These names must be unique. The second two parameters will be floating point values indicating the x and y coordinates of this node in the euclidean plane respectively.
+    A line specifying an edge will have two space-delimited items. The first and second will both be string node identifiers. The nodes in the edge must have already been specified using the node specification above. To make a fully connected graph, you may simply enter `SOME STRING` on its own line after all the nodes.
+
+    An example of this specification with three fully connected nodes is as follows:
+
+    ```
+    a 3.14    0
+    b 1       1.618
+    c 2.71828 0
+    a b
+    a c
+    b c
+    ```
+
+*** Parameters
+   Required parameters:
+
+**** Communication Range
+    Description:  The maximum effective communication range for a sensor in the euclidean plane.
+    Flag:         -c
+    Type:         float
+    Type Checked: True
+
+**** Budget
+    Description: The maximum budget for the sensor placement spanning tree.
+    Flag:         -b
+    Type:         float
+    Type Checked: True
+
+    Additionally, one of the following must be provided:
+
+**** Graph File
+    Description: The file from which to load an encoded graph.
+    Flag:         -f
+    Type:         File Path
+    Type Checked: True
+
+**** String Graph
+    Description: The encoded graph to load as a string
+    Flag:         -g
+    Type:         Graph Encoding
+    Type Checked: True (During parsing)
 
 ** Requirements:
 
-   Implement the following algorithms from the paper "udget Constrained Relay node Place-ment with Minimum Number of Connected Component" (See `papers` directory)
+   Implement the following algorithms from the paper "Budget Constrained Relay node Place-ment with Minimum Number of Connected Component" (See `papers` directory)
 
 *** Relay Node Placement Problem with Mini-mum Number of Connected Components
 
