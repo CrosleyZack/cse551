@@ -60,25 +60,6 @@
   (and (<= (:x top-left-corner)     (:x point) (:x bottom-right-corner))
        (<= (:y bottom-right-corner) (:y point) (:y top-left-corner))))
 
-(defn points-in-square
-  "Gets the set of all points which are in this square."
-  [graph top-left-corner bottom-right-corner]
-  (filter #(point-in-square (node-location graph %)
-                            top-left-corner
-                            bottom-right-corner)
-          (uber/nodes graph)))
-
-(defn point-exists-in-square
-  "returns true the first encounter of a node in the square. Else returns false."
-  ([graph top-left-corner bottom-right-corner]
-   (point-exists-in-square graph top-left-corner bottom-right-corner (uber/nodes graph)))
-  ([graph top-left-corner bottom-right-corner nodes]
-   (some #(point-in-square
-            %
-            top-left-corner
-            bottom-right-corner)
-         (map #(node-location graph %) nodes))))
-
 ;;; Set Utility functions ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn ds-from
@@ -383,6 +364,26 @@
                  (+ w x y z))]
     [w x y z]))
 
+
+(defn points-in-square
+  "Gets the set of all points which are in this square."
+  [graph top-left-corner bottom-right-corner]
+  (filter #(point-in-square (node-location graph %)
+                            top-left-corner
+                            bottom-right-corner)
+          (uber/nodes graph)))
+
+(defn point-exists-in-square
+  "returns true the first encounter of a node in the square. Else returns false."
+  ([graph top-left-corner bottom-right-corner]
+   (point-exists-in-square graph top-left-corner bottom-right-corner (uber/nodes graph)))
+  ([graph top-left-corner bottom-right-corner nodes]
+   (some #(point-in-square
+            %
+            top-left-corner
+            bottom-right-corner)
+         (map #(node-location graph %) nodes))))
+
 (defn graph-midpoint
   [graph src dst]
   (midpoint
@@ -438,6 +439,35 @@
                 (merge-with + top-left {:x size :y (- size)})]]
     (for [p points]
       [p (merge-with + {:x size :y (- size)} p)])))
+
+(defn cell-locations
+  "Takes a `dict` center, an `int` edge-length, and a `float` grid size and produces top left
+  corners of grid squares.
+  This is required for determining items in grids for `G_i-potential` calculation. Definition 4.1
+  on page 4 of the garg paper."
+  ([center edge-length grid-size]
+   (letfn [(gen-deltas [loc i j]
+             (cond
+               (= loc :NW) [(* i grid-size)
+                            (- (* j grid-size))
+                            0]
+               ;; The southeast corner of the cell at i,j is also the northwest corner of the cell at i+1,j+1.
+               (= loc :SE) (recur :NW (inc i) (inc j))))
+           (delta-merge [m deltas]
+             (merge-with +
+                         m
+                         (zipmap [:x :y :z]
+                                 deltas)))]
+     (let [count    (/ edge-length grid-size)
+           halved   (/ edge-length 2)
+           top-left (delta-merge center
+                                 ((juxt - identity (constantly 0)) halved))]
+       (for [i (range count)
+             j (range count)]
+         [(delta-merge top-left
+                       (gen-deltas :NW i j))
+          (delta-merge top-left
+                       (gen-deltas :SE i j))])))))
 
 (defn grid-cell-map
   "Get the root and tree for grid subdivisions."
