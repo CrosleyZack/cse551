@@ -197,38 +197,44 @@ Our final implementation can be found below.
 \end{lstlisting}
 
 \section{Result}
-We have successfully implemented the first of the two algorithms from the paper, which is the budget constrained relay node placement with minimum number of connected components (BCRP-MNCC).
-This algorithm finds the optimal placement of nodes to minimize the number of separate networks of relay nodes.
-To accomplish this, we first used a graph library in Clojure and implemented a generic minimum spanning tree (MST) function.
-We then implemented the fourth algorithm from the paper using this and other utility functions and evaluated its results using randomly generated graphs as input.
-Our manual testing shows correct output, suggesting a completed implementation.
-
-The second algorithm to implement, algorithm 5 from the paper, is the budget constrained relay node placement with maximum size of largest connected component (BCRP-MLCC).
-This algorithm finds the optimal node placement for sensors given a budget while maximizing the number of nodes in a single large component.
-This problem is still being researched before implementation.
-The algorithm is built off of a k-node minimum spanning tree, the calculation of which is an NP-Hard problem.
-As such this algorithm is an approximation, and many different implementations exist.
-We are still exploring the different implementations to determine which is best for our use case.
-One question we are trying to answer in order to make this determination is what type of k-MST is best for this problem.
-Some k-MST implementations require an initial root node, which may or may not be a good decision for this algorithm.
-Once this determination is made, we will implement the k-MST on top of our chosen graph structure, after which the completion of this algorithm is straight forward.
+TODO
 
 \section{Conclusion}
-
 This project discusses and implements two algorithms designed to make placement decisions for sensor relay nodes in a limited budget environment.
 We implement algorithms that perform this placement while using either number of components or largest component as a placement metric.
-We have completed the first of the two algorithms and validated its accuracy.
-We are evaluating which k-MST algorithm to implement for the second algorithm, after which the remaining portion of BCRP-MLCC should be trivial to implement.
-We are well on track for the project to be completed and written up on time.
+These algorithms are the \textit{Budget Constrained Relay node Placement with Minimum Number of Connected Component (BCRP-MNCC)} and \textit{Budget Constrained Relay node Placement with Maximum size of Largest Connected Component (BCRP-MLCC)} respectively.
+The BCRP-MNCC is written and has produced excellent results.
+We are able to find the optimal placement for nodes on with arbitrary locations, communication range, and budget.
+Proof of its functionality can be found above in our results section.
+We also have had success with our BCRP-MLCC implementation.
+We have a working k-MST approximation that enables us to find, using the algorithm from the paper, the largest connected tree for node placements.
+The results of this algorithm are not guaranteed to be optimal given that a true k-MST implementation is NP-Hard, however our approximation is producing reasonable output in our testing.
+These resutls can be seen above in the results section.
 
-%\begin{figure}[h!]
-%\centering
-%\includegraphics[scale=1.7]{universe}
-%\caption{The Universe}
-%\label{fig:universe}
-%\end{figure}
+\section{Peer Review}
+Below is the table of all members of our team, scored out of 20.
+Note names are in alphabetical ordering.
+TODO Fill out table.
+\begin{center}
+  \begin{tabular}{|c|c|}
+     \hline
+  Name & Score ($\frac{}{20}$)\\
+   \hline
+  Zackary Crosley & ? \\
+   \hline
+  Maxfield Lehman & ?\\
+   \hline
+  Zahra Zahedi & ?\\
+                  \hline
+\end{tabular}
+\end{center}
 
-
+\subsubsection*{Zackary Crosley}
+TODO Write out eval.
+\subsubsection*{Maxfield Lehman}
+TODO Write out eval.
+\subsubsection*{Zahra Zahedi}
+TODO Write out eval.
 
 \bibliographystyle{plain}
 \bibliography{references}
