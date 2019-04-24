@@ -658,11 +658,14 @@
   ([graph comm-range budget]
    (algorithm5 graph comm-range budget (uber/count-nodes graph)))
   ([graph comm-range budget k]
-   (let [kmst     (k-min-spanning-tree graph k)
-         weighted (weight-tree kmst comm-range)]
-     (if (> (total-edge-weight weighted) budget)
-       weighted
-       (recur graph comm-range budget (dec k))))))
+   (if (<= k 1)
+     (print "No such tree could be found! Reached k=1, which has no minimum spanning tree.")
+     (let [kmst     (k-min-spanning-tree graph k)
+           weighted (weight-tree kmst comm-range)]
+       (println "k = " k)
+       (if (> (total-edge-weight weighted) budget)
+         (recur graph comm-range budget (dec k))
+         weighted)))))
 
 (defn -main
   " Read in graphs and run algorithms. "
