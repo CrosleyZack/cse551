@@ -620,7 +620,7 @@
      (let [kmst (k-min-spanning-tree graph k)]
        (if (> (total-edge-weight kmst :weight) budget)
          (recur graph comm-range budget (dec k))
-         graph)))))
+         kmst)))))
 
 ;;; Main ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
