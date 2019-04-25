@@ -35,7 +35,7 @@ As discussed in the introduction, we have two metrics for connectedness. In both
 \item A communication range $R$ related to the sensors and relay nodes, and
 \item A budget $B$  on the number of relay nodes.
 \end{enumerate}
-\\
+
 The problem is represented by a graph $G=(V,E)$, where each $v_i\in V$ is a node corresponding to point $p_i\in P$, and edge $e_{ij}\in E$ between nodes $v_i$ and $v_j$ exists if the distance between $p_i$ and $p_j$ are less than $R$.
 This graph $G(V, E)$ may be disconnected with some number of connected components.
 From the graph $G=(V,E)$ an augmented graph $G^\prime=(V^\prime, E^\prime)$ can be produced that optimizes a metric of connectedness while using at most $B$ relay nodes in locations $Q=\{q_1, \hdots, q_{|B|}\}$.
@@ -147,7 +147,7 @@ Further grid sizes $x_i = 2^ix_0$ for $i > 0$.
 At $i = \log k$, $x_i = \sigma$ or the edge size of the square.
 Thus the depth of our tree of partitions will have a logarithmic relationship to the number of points in our k-MST.
 The total potential for a set of points $S$ is the sum of $G_i$ potentials for this range.
-That is, $P(S) = \sum_{i=0}^{\ceil{\log k} - 1} G_i(S)$.
+That is, $P(S) = \sum_{i=0}^{\lceil \log k \rceil - 1} G_i(S)$.
 
 The full k-MST simply iterates over each possible combination of points $p_i$ and $p_j$, creates the circle at the midpoint between them with diameter $\sqrt{3}d(i,j)$, calculates the $k$ points in this circle with the minimum potential, and selects the tree for the $p_i$ and $p_j$ with the lowest total weight.
 This algorithm can be seen below in Figure 3.
@@ -157,7 +157,7 @@ This algorithm can be seen below in Figure 3.
 \includegraphics[width=0.9\textwidth]{k-mst.png}
 \label{k-MST}
 \caption{k Minimum Spanning Tree from Garg 1997}
-\end{figure}\\
+\end{figure}
 
 Our implementation of this algorithm is as follows.
 
@@ -197,7 +197,64 @@ Our final implementation can be found below.
 \end{lstlisting}
 
 \section{Result}
-TODO
+This section will discuss results of our implementation that serve as our testing and validation.
+
+\subsection{BCRP-MNCC}
+The BCRP-MNCC takes an arbitrary set of points and from them produces the minimal spanning trees of as few components as possible given the budget constraints.
+A simple example of this can be seen below, with only two nodes and three edges forming a simple right triangle.
+For this example, the communication range was set to five and our budget to two.
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.9\textwidth]{examples/loc0_graph.png}
+\label{loc0_graph}
+\caption{Simple Testing Graph}
+\end{figure}\\
+From this example, it is easy to see that our minimum spanning tree would be to take the two edges of length ten, or budget one, from \textit{a} to \textit{b} and \textit{a} to \textit{c}.
+This is permissable in our budget, since the communication range is five requiring only one sensor node one each of these edges and we have a budget of two sensor nodes.
+In our output below, the computer was successful at recreating this expected output.
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.9\textwidth]{examples/loc0_alg4.png}
+\label{loc0_alg4}
+\caption{Simple Graph BCRP-MNCC Output}
+\end{figure}\\
+This is a rather trivial example, however, so more complicated examples were tested.
+One such example with six nodes can be found below.
+In this example, we set the communication range to four and the budget to nine sensor nodes.
+\begin{figure}[h]
+\includegraphics[width=1.2\textwidth]{examples/loc3_graph.png}
+\label{loc3_graph}
+\caption{Bigger Testing Graph}
+\end{figure}\\
+This example is significantly more complicated (and notably less well organized by the graphics software).
+Manually looking through the graph, it appears that our minimum spanning tree would include the following edges:
+
+\begin{itemize}
+  \item a $\longleftrightarrow$ b (weight 3.0)
+  \item b $\longleftrightarrow$ e (weight 2.0)
+  \item b $\longleftrightarrow$ c (weight 3.0)
+  \item c $\longleftrightarrow$ f (weight 1.0)
+  \item f $\longleftrightarrow$ d (weight 1.0)
+\end{itemize}
+
+However, this totals to a weight of ten.
+Since the max budget is nine, an edge has to be removed.
+The algorithm removes the edge with the highest weight, which would be either a $\longleftrightarrow$ b or b $\longleftrightarrow$ c.
+After this edge is removed, our total weight is now seven and the tree should be returned.
+In the output below, we see this expectation matched.
+The computer removed edge b $\longleftrightarrow$ c and returned the two disconnected components.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.9\textwidth]{examples/loc3_alg4.png}
+\label{loc3_alg4}
+\caption{Bigger Graph BCRP-MNCC Output}
+\end{figure}
+
+
+\subsection{BCRP-MLCC}
+
+
 
 \section{Conclusion}
 This project discusses and implements two algorithms designed to make placement decisions for sensor relay nodes in a limited budget environment.
