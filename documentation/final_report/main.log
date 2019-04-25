@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.19 (TeX Live 2018/Arch Linux) (preloaded format=pdflatex 2019.4.5)  18 APR 2019 13:32
+This is pdfTeX, Version 3.14159265-2.6-1.40.19 (TeX Live 2018/Arch Linux) (preloaded format=pdflatex 2019.4.23)  25 APR 2019 14:03
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -309,38 +309,24 @@ Package natbib Warning: Citation `relay-node' on page 1 undefined on input line
 
 LaTeX Font Info:    Font shape `OMS/cmr/m/n' in size <10> not available
 (Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 26.
-
-./main.tex:39: LaTeX Error: There's no line here to end.
-
-See the LaTeX manual or LaTeX Companion for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.39 T
-      he problem is represented by a graph $G=(V,E)$, where each $v_i\in V$ ...
-
-Your command was ignored.
-Type  I <command> <return>  to replace it with another command,
-or  <return>  to continue without it.
-
 [1
 
 {/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}]
 
 Package natbib Warning: Citation `relay-node' on page 2 undefined on input line
- 46.
+ 47.
 
 
 Package natbib Warning: Citation `relay-node' on page 2 undefined on input line
- 48.
+ 49.
 
 <Alg4.png, id=18, 693.59125pt x 324.21124pt>
 File: Alg4.png Graphic file (type png)
 <use Alg4.png>
-Package pdftex.def Info: Alg4.png  used on input line 51.
+Package pdftex.def Info: Alg4.png  used on input line 52.
 (pdftex.def)             Requested size: 310.4979pt x 145.14175pt.
 
-Underfull \hbox (badness 10000) in paragraph at lines 46--64
+Underfull \hbox (badness 10000) in paragraph at lines 47--65
 
  []
 
@@ -348,146 +334,113 @@ Underfull \hbox (badness 10000) in paragraph at lines 46--64
 <Alg5.png, id=26, 699.61375pt x 417.56pt>
 File: Alg5.png Graphic file (type png)
 <use Alg5.png>
-Package pdftex.def Info: Alg5.png  used on input line 71.
+Package pdftex.def Info: Alg5.png  used on input line 72.
 (pdftex.def)             Requested size: 310.4979pt x 185.31981pt.
 
-Underfull \hbox (badness 10000) in paragraph at lines 66--75
+Underfull \hbox (badness 10000) in paragraph at lines 67--76
 
  []
 
 [3 <./Alg5.png>] [4]
-LaTeX Font Info:    Try loading font information for OML+cmr on input line 106.
+LaTeX Font Info:    Try loading font information for OML+cmr on input line 108.
 
  (/usr/share/texmf-dist/tex/latex/base/omlcmr.fd
 File: omlcmr.fd 2014/09/29 v2.5h Standard LaTeX font definitions
 )
 LaTeX Font Info:    Font shape `OML/cmr/m/n' in size <10> not available
-(Font)              Font shape `OML/cmm/m/it' tried instead on input line 106.
+(Font)              Font shape `OML/cmm/m/it' tried instead on input line 108.
 
 
 Package natbib Warning: Citation `Garg1997' on page 5 undefined on input line 1
-20.
-
-./main.tex:138: Missing delimiter (. inserted).
-<to be read again> 
-                   {
-l.138 ...s option, we consider options $i = \left{
-                                                  0, 1, \hdots, \ceil{\log k...
-I was expecting to see something like `(' or `\{' or
-`\}' here. If you typed, e.g., `{' instead of `\{', you
-should probably delete the `{' by typing `1' now, so that
-braces don't get unbalanced. Otherwise just proceed.
-Acceptable delimiters are characters whose \delcode is
-nonnegative, or you can use `\delimiter <delimiter code>'.
-
-./main.tex:138: Undefined control sequence.
-l.138 ...er options $i = \left{0, 1, \hdots, \ceil
-                                                  {\log k} - 1\right}$.
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
-
-./main.tex:138: Missing } inserted.
-<inserted text> 
-                }
-l.138 ...eft{0, 1, \hdots, \ceil{\log k} - 1\right
-                                                  }$.
-I've inserted something that you may have forgotten.
-(See the <inserted text> above.)
-With luck, this will get me unwedged. But if you
-really didn't forget anything, try typing `2' now; then
-my insertion and my current dilemma will both disappear.
-
-./main.tex:138: Missing delimiter (. inserted).
-<to be read again> 
-                   }
-l.138 ...ft{0, 1, \hdots, \ceil{\log k} - 1\right}
-                                                  $.
-I was expecting to see something like `(' or `\{' or
-`\}' here. If you typed, e.g., `{' instead of `\{', you
-should probably delete the `{' by typing `1' now, so that
-braces don't get unbalanced. Otherwise just proceed.
-Acceptable delimiters are characters whose \delcode is
-nonnegative, or you can use `\delimiter <delimiter code>'.
-
-./main.tex:138: Extra }, or forgotten $.
-<recently read> }
-                 
-l.138 ...ft{0, 1, \hdots, \ceil{\log k} - 1\right}
-                                                  $.
-I've deleted a group-closing symbol because it seems to be
-spurious, as in `$x}$'. But perhaps the } is legitimate and
-you forgot something else, as in `\hbox{$x}'. In such cases
-the way to recover is to insert both the forgotten and the
-deleted material, e.g., by typing `I$}'.
-
-./main.tex:140: Undefined control sequence.
-l.140 That is, $P(S) = \sum_{i=0}^{\ceil
-                                        {\log k} - 1} G_i(S)$.
-The control sequence at the end of the top line
-of your error message was never \def'ed. If you have
-misspelled it (e.g., `\hobx'), type `I' and the correct
-spelling (e.g., `I\hbox'). Otherwise just continue,
-and I'll forget about whatever was undefined.
+23.
 
 [5]
-<k-mst.png, id=38, 1375.1375pt x 476.78125pt>
+<k-mst.png, id=37, 1375.1375pt x 476.78125pt>
 File: k-mst.png Graphic file (type png)
 <use k-mst.png>
-Package pdftex.def Info: k-mst.png  used on input line 148.
+Package pdftex.def Info: k-mst.png  used on input line 157.
 (pdftex.def)             Requested size: 310.4979pt x 107.64944pt.
 
-
-./main.tex:152: LaTeX Error: There's no line here to end.
-
-See the LaTeX manual or LaTeX Companion for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.152 
-      
-Your command was ignored.
-Type  I <command> <return>  to replace it with another command,
-or  <return>  to continue without it.
+Overfull \hbox (81.00433pt too wide) in paragraph at lines 169--170
+[][][][][][][][][][][][][][][] 
+ []
 
 
-Overfull \hbox (45.00397pt too wide) in paragraph at lines 167--168
-[][][][][][][][][][][][][][][][][][][][][][][] 
+Overfull \hbox (141.00494pt too wide) in paragraph at lines 171--172
+[][][][][][][][][][][][][][][][][][][][][][][][][][][] 
  []
 
 [6 <./k-mst.png>]
+Overfull \hbox (45.00397pt too wide) in paragraph at lines 190--191
+[][][][][][][][][][][][][][][][][][][][][][][] 
+ []
+
+<examples/loc0_graph.png, id=42, 850.17625pt x 362.35374pt>
+File: examples/loc0_graph.png Graphic file (type png)
+<use examples/loc0_graph.png>
+Package pdftex.def Info: examples/loc0_graph.png  used on input line 207.
+(pdftex.def)             Requested size: 310.4979pt x 132.33818pt.
+<examples/loc0_alg4.png, id=43, 677.53125pt x 224.84pt>
+File: examples/loc0_alg4.png Graphic file (type png)
+<use examples/loc0_alg4.png>
+Package pdftex.def Info: examples/loc0_alg4.png  used on input line 216.
+(pdftex.def)             Requested size: 310.4979pt x 103.0434pt.
+<examples/loc3_graph.png, id=44, 2656.92625pt x 779.91376pt>
+File: examples/loc3_graph.png Graphic file (type png)
+<use examples/loc3_graph.png>
+Package pdftex.def Info: examples/loc3_graph.png  used on input line 224.
+(pdftex.def)             Requested size: 413.99895pt x 121.51611pt.
+
+Overfull \hbox (68.99895pt too wide) in paragraph at lines 224--226
+[][]
+ []
+
+
+LaTeX Warning: `h' float specifier changed to `ht'.
+
+[7 <./examples/loc0_graph.png>]
+<examples/loc3_alg4.png, id=50, 1046.91125pt x 360.34625pt>
+File: examples/loc3_alg4.png Graphic file (type png)
+<use examples/loc3_alg4.png>
+Package pdftex.def Info: examples/loc3_alg4.png  used on input line 245.
+(pdftex.def)             Requested size: 310.4979pt x 106.87305pt.
+
+
+LaTeX Warning: `h' float specifier changed to `ht'.
+
+[8 <./examples/loc0_alg4.png> <./examples/loc3_graph.png>] [9 <./examples/loc3_
+alg4.png>]
 No file main.bbl.
 
 Package natbib Warning: There were undefined citations.
 
-[7] (./main.aux) ) 
+[10] (./main.aux) ) 
 Here is how much of TeX's memory you used:
- 4952 strings out of 492616
- 66389 string characters out of 6135178
- 143788 words of memory out of 5000000
- 8791 multiletter control sequences out of 15000+600000
- 11862 words of font info for 46 fonts, out of 8000000 for 9000
+ 4981 strings out of 492616
+ 66990 string characters out of 6135177
+ 145820 words of memory out of 5000000
+ 8814 multiletter control sequences out of 15000+600000
+ 12208 words of font info for 47 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  41i,11n,32p,349b,1515s stack positions out of 5000i,500n,10000p,200000b,80000s
-</usr/share/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.
-pfb></usr/share/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb></usr/shar
-e/texmf-dist/fonts/type1/public/amsfonts/cm/cmbxti10.pfb></usr/share/texmf-dist
-/fonts/type1/public/amsfonts/cm/cmex10.pfb></usr/share/texmf-dist/fonts/type1/p
-ublic/amsfonts/cm/cmmi10.pfb></usr/share/texmf-dist/fonts/type1/public/amsfonts
-/cm/cmmi7.pfb></usr/share/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb><
-/usr/share/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb></usr/share/texm
-f-dist/fonts/type1/public/amsfonts/cm/cmr17.pfb></usr/share/texmf-dist/fonts/ty
-pe1/public/amsfonts/cm/cmr7.pfb></usr/share/texmf-dist/fonts/type1/public/amsfo
-nts/cm/cmr8.pfb></usr/share/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pf
-b></usr/share/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy6.pfb></usr/share/t
-exmf-dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb></usr/share/texmf-dist/fonts
-/type1/public/amsfonts/cm/cmsy8.pfb>
-Output written on main.pdf (7 pages, 317171 bytes).
+</usr/share/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10
+.pfb></usr/share/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb></usr/sha
+re/texmf-dist/fonts/type1/public/amsfonts/cm/cmbxti10.pfb></usr/share/texmf-dis
+t/fonts/type1/public/amsfonts/cm/cmex10.pfb></usr/share/texmf-dist/fonts/type1/
+public/amsfonts/cm/cmmi10.pfb></usr/share/texmf-dist/fonts/type1/public/amsfont
+s/cm/cmmi7.pfb></usr/share/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb>
+</usr/share/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb></usr/share/tex
+mf-dist/fonts/type1/public/amsfonts/cm/cmr17.pfb></usr/share/texmf-dist/fonts/t
+ype1/public/amsfonts/cm/cmr7.pfb></usr/share/texmf-dist/fonts/type1/public/amsf
+onts/cm/cmr8.pfb></usr/share/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.p
+fb></usr/share/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy6.pfb></usr/share/
+texmf-dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb></usr/share/texmf-dist/font
+s/type1/public/amsfonts/cm/cmsy8.pfb></usr/share/texmf-dist/fonts/type1/public/
+amsfonts/cm/cmti10.pfb>
+Output written on main.pdf (10 pages, 580888 bytes).
 PDF statistics:
- 94 PDF objects out of 1000 (max. 8388607)
- 64 compressed objects within 1 object stream
+ 111 PDF objects out of 1000 (max. 8388607)
+ 73 compressed objects within 1 object stream
  0 named destinations out of 1000 (max. 500000)
- 16 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 36 words of extra memory for PDF output out of 10000 (max. 10000000)
 

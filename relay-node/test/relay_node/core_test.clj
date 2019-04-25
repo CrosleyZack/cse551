@@ -74,7 +74,7 @@
   ;; loc0: comm-range is 5 and budget is 20
   (let [comm-range 5]
     (is (= (algorithm5 (init-graph loc0) comm-range 2)
-           (testing-graph '([:a {:x 0 :y 0 :z 0}] [:b {:x 10 :y 0 :z 0}] [:c {:x 0 :y 10 :z 0}] [:a :c]) comm-range))))
+           (testing-graph '([:a {:x 0 :y 0 :z 0}] [:b {:x 10 :y 0 :z 0}] [:c {:x 0 :y 10 :z 0}] [:a :c] [:a :b]) comm-range))))
   (let [comm-range 4]
     (is (= (algorithm5 (init-graph loc1) comm-range 9)
            (testing-graph '([:a {:x 0 :y 0 :z 0}] [:b {:x 36 :y 0 :z 0}] [:c {:x 0 :y 12 :z 0}] [ :d {:x 24 :y 12 :z 0}] [:e {:x 34.392 :y 6 :z 0}] [:d :c] [:d :e] [:b :e]) comm-range))))

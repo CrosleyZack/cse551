@@ -151,11 +151,11 @@
 (defn induced-subgraph
   [g vertices]
   (->> g
-           uber/edges
-           (filter (complement #(->> %
-                                  ((juxt :src :dest))
-                                  (every? vertices))))
-           (uber/remove-edges* g)))
+    uber/edges
+    (filter (complement #(->> %
+                           ((juxt :src :dest))
+                           (every? vertices))))
+    (uber/remove-edges* g)))
 
 (defn unidirectional-edges
   "Gets the unique edges in the graph (removes bidirectional edges)"
@@ -311,8 +311,8 @@
   "Like Max's, but actually works."
   [nodes]
   (->> nodes
-     (map (juxt :id #(dissoc % :id)))
-     (apply uber/graph)))
+    (map (juxt :id #(dissoc % :id)))
+    (apply uber/graph)))
 
 (defn make-graph
   [graph-str]
@@ -383,7 +383,7 @@
 
 
 (defn points-in-square
-  "Gets the set of all points which are in this square."
+  "Gets the set of all points which are in his square."
   [graph top-left-corner bottom-right-corner]
   (filter #(point-in-square (node-location graph %)
                             top-left-corner
