@@ -619,7 +619,12 @@
   representing the placement of relay nodes with the maximum connected component
   size."
   ([graph comm-range budget]
-   (algorithm5 (weight-forest graph comm-range) comm-range budget (uber/count-nodes graph)))
+   (algorithm5 (-> graph
+                 complete-graph
+                 (weight-forest comm-range))
+               comm-range
+               budget
+               (uber/count-nodes graph)))
   ([graph comm-range budget k]
    (if (<= k 1)
      (println "No such tree could be found! Reached k=1, which has no minimum spanning tree.")
