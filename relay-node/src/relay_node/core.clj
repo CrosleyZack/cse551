@@ -286,7 +286,7 @@
     {:id (keyword node)
      :x  x
      :y  y
-     :z  z}))
+     :z  (first-defined z 0)}))
 
 (defn parse-edge
   [edge-line]
