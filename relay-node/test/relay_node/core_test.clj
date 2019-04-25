@@ -70,9 +70,15 @@
     total-edge-weight))
 
 (deftest mst-cal
-   (is (=  54 (Math/round (mst-weight loc1))))
-   (is (= 84.0 (mst-weight loc2)))
-   (is (=  70.0 (mst-weight loc3))))
+  (is (=  54 (Math/round (mst-weight loc1))))
+  (is (= 84.0 (mst-weight loc2)))
+  (is (=  70.0 (mst-weight loc3))))
+
+(deftest algorithm4-test
+  (is (= (algorithm4 (mst loc0) 5 20)
+         (-> (uber/graph [:a {:x 0 :y 0 :z 0}] [:b {:x 10 :y 0 :z 0}] [:c {:x 0 :y 10 :z 0}] [:a :b] [:a :c])
+           length-graph
+           (weight-tree 5)))))
 
 ;;(deftest algorithm4-check
    ;;(let [alg41 (algorithm4 (mst loc1) 2 18)
