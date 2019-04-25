@@ -62,8 +62,10 @@
 
 (defn point-in-square
   [point top-left-corner bottom-right-corner]
-  (and (<= (:x top-left-corner)     (:x point) (:x bottom-right-corner))
-       (<= (:y bottom-right-corner) (:y point) (:y top-left-corner))))
+  (and (<= (:x top-left-corner)     (:x point))
+       (< (:x point)                (:x bottom-right-corner))
+       (<= (:y bottom-right-corner) (:y point))
+       (< (:y point)                (:y top-left-corner))))
 
 ;;; Set Utility functions ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
