@@ -150,12 +150,12 @@
 
 (defn induced-subgraph
   [g vertices]
-  (apply uber/graph
-         (->> g
+  (->> g
            uber/edges
-           (filter #(->> %
-                      ((juxt :src :dest))
-                      (every? vertices))))))
+           (filter (complement #(->> %
+                                  ((juxt :src :dest))
+                                  (every? vertices))))
+           (uber/remove-edges* g)))
 
 (defn unidirectional-edges
   "Gets the unique edges in the graph (removes bidirectional edges)"
