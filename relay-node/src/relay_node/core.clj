@@ -582,14 +582,11 @@
        (->> (minpot state children tree potentials)
          (potentials-from-children state current-nodes tree))))))
 
-
 (defn k-min-spanning-tree
   [graph k]
   (let [candidates (->> (for [[src dst] (combo/combinations (uber/nodes graph) 2)]
-                          (let [[mid diameter] (apply get-circle
-                                                      (map (partial node-location graph)
-                                                           [src dst]))
-                                state          {:graph graph :center mid :diameter diameter :k k}]
+                          (let [[mid diameter] (get-circle graph src dst)
+                            state          {:graph graph :center mid :diameter diameter :k k}]
                             (-> state
                               minpot
                               (get k)
