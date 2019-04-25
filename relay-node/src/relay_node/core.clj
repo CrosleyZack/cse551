@@ -619,7 +619,7 @@
    (algorithm5 (weight-forest graph comm-range) comm-range budget (uber/count-nodes graph)))
   ([graph comm-range budget k]
    (if (<= k 1)
-     (print "No such tree could be found! Reached k=1, which has no minimum spanning tree.")
+     (println "No such tree could be found! Reached k=1, which has no minimum spanning tree.")
      (let [kmst (k-min-spanning-tree graph k)]
        (if (> (total-edge-weight kmst :weight) budget)
          (recur graph comm-range budget (dec k))
