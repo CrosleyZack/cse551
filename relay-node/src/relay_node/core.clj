@@ -126,9 +126,7 @@
   "Retrieves the edges that exist in a fully connected graph with the set of nodes.
   Removes self referencial nodes."
   [nodes]
-  (filter (fn [[src dst]] (not (= src dst)))
-          (apply combo/cartesian-product
-                 (repeat 2 nodes))))
+  (combo/combinations nodes 2))
 
 (defn add-edges
   [graph edges]
@@ -228,7 +226,8 @@
 (defn add-all-edges
   "Takes an `uber/graph` and returns an `uber/graph` with edges between all nodes."
   [graph]
-  (add-edges graph (get-edges (uber/nodes graph))))
+  (add-edges graph (combo/combinations (uber/nodes bare-graph)
+                                       2)))
 
 
 (defn randomly-locate-nodes
@@ -268,6 +267,10 @@
     (add-all-edges)
     (randomly-locate-nodes max-coord)
     (length-graph)))
+
+(defn complete-graph [g]
+  (length-graph (add-all-edges g)))
+
 
 ;;; IO Functions ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -310,10 +313,7 @@
                                         (map (juxt :id #(dissoc % :id))
                                              nodes))
                                  nodes)
-        full-graph (length-graph (reduce uber/add-edges
-                                         bare-graph
-                                         (combo/combinations (uber/nodes bare-graph)
-                                                             2)))]
+        full-graph (complete-graph bare-graph)]
     (->> full-graph
       uber/edges
       (filter #(> (uber/attr full-graph % :length)
