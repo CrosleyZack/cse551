@@ -132,8 +132,8 @@
   [graph edges]
   (reduce (fn [acc edge]
             (uber/add-edges acc edge))
-            graph
-            edges))
+          graph
+          edges))
 
 (defn node-location
   [graph node]
@@ -172,11 +172,13 @@
    (get (uber/attrs graph [(:src edge) (:dest edge)]) key)))
 
 (defn sorted-edges
-  "Given a graph, returns it edges sorted in increasing order."
-  [graph metric]
-  (->> graph
-    (unidirectional-edges)
-    (sort #(compare (edge-value graph %1 :length) (edge-value graph %2 :length)))))
+  "Given a graph, returns it edges sorted in increasing order.")
+  ([graph]
+   (sorted-edges graph :length))
+  ([graph metric]
+   (->> graph
+     (unidirectional-edges)
+     (sort #(compare (edge-value graph %1 metric) (edge-value graph %2 metric))))))
 
 (defn total-edge-weight
   ([g]
@@ -196,8 +198,8 @@
   [g e]
   (uber/remove-edges* g [e]))
 
-(defn weight-tree
-  [tree scaling-factor]
+(defn weight-forest
+  [forest scaling-factor]
   (reduce (fn [acc {:keys [src dest]
                     :as   edge}]
             (uber/add-attr acc
@@ -207,8 +209,8 @@
                            (dec (Math/ceil
                                   (/ (edge-value acc edge :length)
                                      scaling-factor)))))
-          tree
-          (uber/edges tree)))
+          forest
+          (uber/edges forest)))
 
 
 ;;; Generate a random graph for testing ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -350,16 +352,16 @@
                             (uber/add-edges* acc [(edge-canonical-form graph edge)]))
                           acc))
                       empty-graph
-                      edges)))))
+                      edges))))))
 
 (defn algorithm4
   "Algorithm 4 from the paper. Takes an `uber/graph` and returns an `uber/graph`
   representing a placement of relay nodes with the minimum number of connected
   components."
   [graph comm-range budget]
-  (let [graph (weight-tree graph comm-range)
+  (let [graph (weight-forest graph comm-range)
         mst   (atom (minimum-spanning-tree graph))]
-    (while (> (total-edge-weight @mst)
+    (while (> (total-edge-weight @mst :weight)
               budget)
       (swap! mst
              remove-edge
@@ -583,7 +585,7 @@
 
 (defn k-min-spanning-tree
   [graph k]
-  (->> (for [[src dst] (get-edges (uber/nodes graph))]
+  (->> (for [[src dst] (map (juxt :src :dest) (unidirectional-edges graph))]
          (let [[mid diameter] (apply get-circle
                                      (map (partial node-location graph)
                                           [src dst]))
@@ -596,7 +598,7 @@
                (induced-subgraph graph))
              minimum-spanning-tree)))
     (filter #(= k (count (uber/nodes %))))
-    (apply min-key total-edge-weight)))
+    (apply min-key total-edge-weight :weight)))
 
 (defn test-alg4
   [num-nodes max-value comm-range budget]
@@ -609,24 +611,23 @@
   representing the placement of relay nodes with the maximum connected component
   size."
   ([graph comm-range budget]
-   (algorithm5 graph comm-range budget (uber/count-nodes graph)))
+   (algorithm5 (weight-forest graph comm-range) comm-range budget (uber/count-nodes graph)))
   ([graph comm-range budget k]
    (if (<= k 1)
      (print "No such tree could be found! Reached k=1, which has no minimum spanning tree.")
-     (let [kmst     (k-min-spanning-tree graph k)
-           weighted (weight-tree kmst comm-range)]
-       (if (> (total-edge-weight weighted) budget)
+     (let [kmst (k-min-spanning-tree graph k)]
+       (if (> (total-edge-weight kmst :weight) budget)
          (recur graph comm-range budget (dec k))
-         weighted)))))
+         graph)))))
 
 ;;; Main ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn graph-execution-times
   [max-nodes max-coords comm-range budget]
   (map #(as-> % $
-              (rand-full-graph $ max-coords)
-              (time (algorithm5 $ comm-range budget)))
-          (range 2 (inc max-nodes))))
+          (rand-full-graph $ max-coords)
+          (time (algorithm5 $ comm-range budget)))
+       (range 2 (inc max-nodes))))
 
 (def cli-options
   "Parse the command line arguments"
