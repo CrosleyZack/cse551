@@ -185,8 +185,9 @@
    (total-edge-weight g :length))
   ([g edge-property]
    (reduce +
-           (map #(edge-value g % edge-property)
-                (unidirectional-edges g)))))
+           (filter some?
+                   (map #(edge-value g % edge-property)
+                        (unidirectional-edges g))))))
 
 (defn max-edge-by
   [g k]
@@ -584,17 +585,21 @@
 
 (defn k-min-spanning-tree
   [graph k]
-  (let [candidates (->> (for [[src dst] (combo/combinations (uber/nodes graph) 2)]
-                          (let [[mid diameter] (get-circle graph src dst)
-                            state          {:graph graph :center mid :diameter diameter :k k}]
-                            (-> state
-                              minpot
-                              (get k)
-                              :points
-                              (->> (into #{})
-                                (induced-subgraph graph))
-                              minimum-spanning-tree)))
-                     (filter #(= k (count (uber/nodes %)))))]
+  (let [candidates (->> (pmap (fn [[src dst]]
+                                (let [[mid diameter] (get-circle graph src dst)
+                                      state          {:graph    graph
+                                                      :center   mid
+                                                      :diameter diameter
+                                                      :k        k}]
+                                  (-> state
+                                    minpot
+                                    (get k)
+                                    :points
+                                    (->> (into #{})
+                                      (induced-subgraph graph))
+                                    (minimum-spanning-tree :weight))))
+                              (combo/combinations (uber/nodes graph) 2))
+                     (filter #(pos? (count (uber/edges %)))))]
     (when (pos? (count candidates))
       (apply min-key #(total-edge-weight % :weight) candidates))))
 
