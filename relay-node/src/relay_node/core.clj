@@ -198,18 +198,17 @@
 
 (defn weight-tree
   [tree scaling-factor]
-  (let [mst (minimum-spanning-tree tree)]
-    (reduce (fn [acc {:keys [src dest]
-                      :as   edge}]
-              (uber/add-attr acc
-                             src
-                             dest
-                             :weight
-                             (dec (Math/ceil
-                                    (/ (edge-value acc edge :length)
-                                       scaling-factor)))))
-            mst
-            (uber/edges mst))))
+  (reduce (fn [acc {:keys [src dest]
+                    :as   edge}]
+            (uber/add-attr acc
+                           src
+                           dest
+                           :weight
+                           (dec (Math/ceil
+                                  (/ (edge-value acc edge :length)
+                                     scaling-factor)))))
+          tree
+          (uber/edges tree)))
 
 
 ;;; Generate a random graph for testing ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
