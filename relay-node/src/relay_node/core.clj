@@ -603,11 +603,10 @@
   ([graph comm-range budget k]
    (if (<= k 1)
      (print "No such tree could be found! Reached k=1, which has no minimum spanning tree.")
-     (let [kmst     (k-min-spanning-tree graph k)
-           weighted (weight-tree kmst comm-range)]
-       (if (> (total-edge-weight weighted) budget)
+     (let [kmst (k-min-spanning-tree graph k)]
+       (if (> (total-edge-weight kmst :weight) budget)
          (recur graph comm-range budget (dec k))
-         weighted)))))
+         graph)))))
 
 ;;; Main ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
