@@ -590,20 +590,21 @@
 
 (defn k-min-spanning-tree
   [graph k]
-  (->> (for [[src dst] (combo/combinations (uber/nodes graph) 2)]
-         (let [[mid diameter] (apply get-circle
-                                     (map (partial node-location graph)
-                                          [src dst]))
-               state          {:graph graph :center mid :diameter diameter :k k}]
-           (-> state
-             minpot
-             (get k)
-             :points
-             (->> (into #{})
-               (induced-subgraph graph))
-             minimum-spanning-tree)))
-    (filter #(= k (count (uber/nodes %))))
-    (apply min-key #(total-edge-weight % :weight))))
+  (let [candidates (->> (for [[src dst] (combo/combinations (uber/nodes graph) 2)]
+                          (let [[mid diameter] (apply get-circle
+                                                      (map (partial node-location graph)
+                                                           [src dst]))
+                                state          {:graph graph :center mid :diameter diameter :k k}]
+                            (-> state
+                              minpot
+                              (get k)
+                              :points
+                              (->> (into #{})
+                                (induced-subgraph graph))
+                              minimum-spanning-tree)))
+                     (filter #(= k (count (uber/nodes %)))))]
+    (when (pos? (count candidates))
+      (apply min-key #(total-edge-weight % :weight) candidates))))
 
 (defn test-alg4
   [num-nodes max-value comm-range budget]
@@ -621,7 +622,8 @@
    (if (<= k 1)
      (println "No such tree could be found! Reached k=1, which has no minimum spanning tree.")
      (let [kmst (k-min-spanning-tree graph k)]
-       (if (> (total-edge-weight kmst :weight) budget)
+       (if (or (nil? kmst)
+               (> (total-edge-weight kmst :weight) budget))
          (recur graph comm-range budget (dec k))
          kmst)))))
 
