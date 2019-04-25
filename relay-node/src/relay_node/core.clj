@@ -579,7 +579,7 @@
 
 (defn k-min-spanning-tree
   [graph k]
-  (->> (for [[src dst] (get-edges (uber/nodes graph))]
+  (->> (for [[src dst] (map (juxt :src :dest) (unidirectional-edges graph))]
          (let [[mid diameter] (apply get-circle
                                      (map (partial node-location graph)
                                           [src dst]))
