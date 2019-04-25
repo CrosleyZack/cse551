@@ -62,8 +62,10 @@
 
 (defn point-in-square
   [point top-left-corner bottom-right-corner]
-  (and (<= (:x top-left-corner)     (:x point) (:x bottom-right-corner))
-       (<= (:y bottom-right-corner) (:y point) (:y top-left-corner))))
+  (and (<= (:x top-left-corner)     (:x point))
+       (< (:x point)                (:x bottom-right-corner))
+       (<= (:y bottom-right-corner) (:y point))
+       (< (:y point)                (:y top-left-corner))))
 
 ;;; Set Utility functions ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -585,7 +587,7 @@
 
 (defn k-min-spanning-tree
   [graph k]
-  (->> (for [[src dst] (map (juxt :src :dest) (unidirectional-edges graph))]
+  (->> (for [[src dst] (combo/combinations (uber/nodes graph) 2)]
          (let [[mid diameter] (apply get-circle
                                      (map (partial node-location graph)
                                           [src dst]))
@@ -598,7 +600,7 @@
                (induced-subgraph graph))
              minimum-spanning-tree)))
     (filter #(= k (count (uber/nodes %))))
-    (apply min-key total-edge-weight :weight)))
+    (apply min-key #(total-edge-weight % :weight))))
 
 (defn test-alg4
   [num-nodes max-value comm-range budget]
