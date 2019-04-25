@@ -172,7 +172,7 @@
    (get (uber/attrs graph [(:src edge) (:dest edge)]) key)))
 
 (defn sorted-edges
-  "Given a graph, returns it edges sorted in increasing order.")
+  "Given a graph, returns it edges sorted in increasing order."
   ([graph]
    (sorted-edges graph :length))
   ([graph metric]
@@ -352,7 +352,7 @@
                             (uber/add-edges* acc [(edge-canonical-form graph edge)]))
                           acc))
                       empty-graph
-                      edges))))))
+                      edges)))))
 
 (defn algorithm4
   "Algorithm 4 from the paper. Takes an `uber/graph` and returns an `uber/graph`
