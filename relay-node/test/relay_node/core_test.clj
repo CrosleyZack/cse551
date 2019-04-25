@@ -59,9 +59,9 @@
 
 (defn mst
   [loc]
-  (->> loc
+  (-> loc
     read-in-graph
-    minimum-spanning-tree))
+    (minimum-spanning-tree :length)))
 
 (defn mst-weight
   [loc]

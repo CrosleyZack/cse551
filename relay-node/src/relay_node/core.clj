@@ -191,10 +191,10 @@
 
 (defn sorted-edges
   "Given a graph, returns it edges sorted in increasing order."
-  [graph]
+  [graph metric]
   (->> graph
     (unidirectional-edges)
-    (sort #(compare (edge-value graph %1 :length) (edge-value graph %2 :length)))))
+    (sort #(compare (edge-value graph %1 metric) (edge-value graph %2 metric)))))
 
 (defn edge-canonical-form
   [g edge]
@@ -236,20 +236,22 @@
 (defn minimum-spanning-tree
   "Takes a `uber/graph` and returns an `uber/graph` that is its minimum spanning tree.
   Implementation of Kruskal's algorithm."
-  [graph]
-  (let [disj-set    (ds-from (uber/nodes graph))
-        edges       (sorted-edges graph)
-        empty-graph (uber/remove-edges* graph (uber/edges graph))]
-    (ds-with disj-set
-             (reduce (fn [acc {:keys [src dest]
-                               :as   edge}]
-                       (if (not (ds-shared-root? src dest))
-                         (do
-                           (ds-union src dest)
-                           (uber/add-edges* acc [(edge-canonical-form graph edge)]))
-                         acc))
-                     empty-graph
-                     edges))))
+  ([graph]
+   (minimum-spanning-tree graph :weight))
+  ([graph metric]
+   (let [disj-set    (ds-from (uber/nodes graph))
+         edges       (sorted-edges graph metric)
+         empty-graph (uber/remove-edges* graph (uber/edges graph))]
+     (ds-with disj-set
+              (reduce (fn [acc {:keys [src dest]
+                                :as   edge}]
+                        (if (not (ds-shared-root? src dest))
+                          (do
+                            (ds-union src dest)
+                            (uber/add-edges* acc [(edge-canonical-form graph edge)]))
+                          acc))
+                      empty-graph
+                      edges)))))
 
 ;;;;; Alg5 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
