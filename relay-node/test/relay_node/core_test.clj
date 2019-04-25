@@ -28,7 +28,8 @@
 (defn mst
   [loc]
   (-> loc
-    (init-graph ##Inf)
+    init-graph
+    complete-graph
     (minimum-spanning-tree :length)))
 
 (defn mst-weight
@@ -61,8 +62,8 @@
   (let [comm-range 12]
     (is (= (algorithm4 (init-graph loc1 comm-range) comm-range 18)
            (testing-graph '([:a {:x 0 :y 0 :z 0}] [:b {:x 36 :y 0 :z 0}] [:c {:x 0 :y 12 :z 0}] [ :d {:x 24 :y 12 :z 0}] [:e {:x 34.392 :y 6 :z 0}] [:a :c] [:d :e] [:b :e]) comm-range))))
-  (let [comm-range 21]
-    (is (= (algorithm4 (init-graph loc2 comm-range) comm-range 21)
+  (let [comm-range 2]
+    (is (= (algorithm4 (init-graph loc2 comm-range) comm-range 35)
            (testing-graph '([:a {:x 0 :y 0 :z 0}] [:b {:x 42 :y 0 :z 0}] [:c {:x 0 :y 21 :z 0}] [:d {:x 42 :y 21 :z 0}] [:a :c] [:b :d]) comm-range))))
   (let [comm-range 14]
     (is (= (algorithm4 (init-graph loc3 comm-range) comm-range 21)
@@ -81,6 +82,7 @@
   [loc comm-range budget]
   (-> loc
     init-graph
+    complete-graph
     (weight-forest comm-range)
     (#(do (uber/viz-graph % {:auto-label true}) %))
     (algorithm4 comm-range budget)

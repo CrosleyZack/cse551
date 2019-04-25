@@ -308,30 +308,23 @@
 
 (defn init-graph
   "Like Max's, but actually works."
-  [nodes comm-range]
-  (let [bare-graph (locate-nodes (apply uber/graph
-                                        (map (juxt :id #(dissoc % :id))
-                                             nodes))
-                                 nodes)
-        full-graph (complete-graph bare-graph)]
-    (->> full-graph
-      uber/edges
-      (filter #(> (uber/attr full-graph % :length)
-                  comm-range))
-      (uber/remove-edges* full-graph))))
+  [nodes]
+  (->> nodes
+     (map (juxt :id #(dissoc % :id)))
+     (apply uber/graph)))
 
 (defn make-graph
-  [graph-str comm-range]
+  [graph-str]
   (-> graph-str
     parse-graph
-    (init-graph comm-range)))
+    init-graph))
 
 (defn read-graph
   "Takes a `str` file location and returns the `uber/graph` specified by the file."
-  [location comm-range]
+  [location]
   (-> location
     slurp
-    (make-graph comm-range)))
+    make-graph))
 
 ;;;;; Alg4 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
