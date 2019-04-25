@@ -599,6 +599,12 @@
     (filter #(= k (count (uber/nodes %))))
     (apply min-key total-edge-weight)))
 
+(defn test-alg4
+  [num-nodes max-value comm-range budget]
+  (as-> (rand-full-graph num-nodes max-value) $
+    (algorithm4 $ comm-range budget)
+    (uber/pprint $)))
+
 (defn algorithm5
   "Algorithm 5 from the paper. Takes an `uber/graph` and returns an `uber/graph`
   representing the placement of relay nodes with the maximum connected component
