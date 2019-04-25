@@ -165,10 +165,13 @@
 
 (defn sorted-edges
   "Given a graph, returns it edges sorted in increasing order."
-  [graph]
-  (->> graph
-    (unidirectional-edges)
-    (sort #(compare (edge-value graph %1 :length) (edge-value graph %2 :length)))))
+
+  ([graph]
+   (sorted-edges graph :length))
+  ([graph metric]
+   (->> graph
+     (unidirectional-edges)
+     (sort #(compare (edge-value graph %1) (edge-value graph %2))))))
 
 (defn total-edge-weight
   ([g]
