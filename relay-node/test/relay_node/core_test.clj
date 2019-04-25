@@ -3,94 +3,70 @@
             [relay-node.core :refer :all]
             [ubergraph.core :as uber]))
 
-(def loc0 {:nodes {:a {:x 0 :y 0 :z 0}
-                   :b {:x 10 :y 0 :z 0}
-                   :c {:x 0 :y 10 :z 0}}
-           :edges [[:a :b]
-                   [:a :c]
-                   [:b :c]]})
+(def loc0 [{:id :a :x 0 :y 0 :z 0}
+           {:id :b :x 10 :y 0 :z 0}
+           {:id :c :x 0 :y 10 :z 0}])
 
-(def loc1 {:nodes {:a {:x 0 :y 0 :z 0}
-                   :b {:x 36 :y 0 :z 0}
-                   :c {:x 0 :y 12 :z 0}
-                   :d {:x 24 :y 12 :z 0}
-                   :e {:x 34.392 :y 6 :z 0}}
-           :edges [[:a :b]
-                   [:a :c]
-                   [:a :d]
-                   [:a :e]
-                   [:b :c]
-                   [:b :d]
-                   [:b :e]
-                   [:c :d]
-                   [:c :e]
-                   [:d :e]]})
-(def loc2 {:nodes {:a {:x 0 :y 0 :z 0}
-                  :b {:x 42 :y 0 :z 0}
-                  :c {:x 0 :y 21 :z 0}
-                  :d {:x 42 :y 21 :z 0}}
-           :edges [[:a :b]
-                   [:a :c]
-                   [:a :d]
-                   [:b :c]
-                   [:b :d]
-                   [:c :d]]})
-(def loc3 {:nodes {:a {:x 0 :y 0 :z 0}
-                  :b {:x 14 :y 0 :z 0}
-                  :c {:x 28 :y 0 :z 0}
-                  :d {:x 0 :y 14 :z 0}
-                  :e {:x 14 :y 14 :z 0}
-                  :f {:x 28 :y 14 :z 0}}
-           :edges [[:a :b]
-                   [:a :c]
-                   [:a :d]
-                   [:a :e]
-                   [:a :f]
-                   [:b :c]
-                   [:b :d]
-                   [:b :e]
-                   [:b :f]
-                   [:c :d]
-                   [:c :e]
-                   [:c :f]
-                   [:d :e]
-                   [:d :f]
-                   [:e :f]]})
+(def loc1 [{:id :a :x 0 :y 0 :z 0}
+           {:id :b :x 36 :y 0 :z 0}
+           {:id :c :x 0 :y 12 :z 0}
+           {:id :d :x 24 :y 12 :z 0}
+           {:id :e :x 34.392 :y 6 :z 0} ])
+
+(def loc2 [{:id :a :x 0 :y 0 :z 0}
+           {:id :b :x 42 :y 0 :z 0}
+           {:id :c :x 0 :y 21 :z 0}
+           {:id :d :x 42 :y 21 :z 0} ])
+
+(def loc3 [{:id :a :x 0 :y 0 :z 0}
+           {:id :b :x 14 :y 0 :z 0}
+           {:id :c :x 28 :y 0 :z 0}
+           {:id :d :x 0 :y 14 :z 0}
+           {:id :e :x 14 :y 14 :z 0}
+           {:id :f :x 28 :y 14 :z 0} ])
 
 (defn mst
   [loc]
   (-> loc
-    init-graph
+    (init-graph ##Inf)
     (minimum-spanning-tree :length)))
 
 (defn mst-weight
   [loc]
-  (->> loc
+  (-> loc
     mst
-    total-edge-weight))
+    (total-edge-weight :length)))
 
 (deftest mst-cal
+  (is (= 20.0 (mst-weight loc0)))
   (is (=  54 (Math/round (mst-weight loc1))))
   (is (= 84.0 (mst-weight loc2)))
   (is (=  70.0 (mst-weight loc3))))
 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn testing-graph
+  [graph-params comm-range]
+  (as-> graph-params $
+    (apply uber/graph $)
+    (length-graph $)
+    (weight-forest $ comm-range)))
+
 (deftest algorithm4-test
-  (is (= (algorithm4 (mst loc0) 5 20)
-         (-> (uber/graph [:a {:x 0 :y 0 :z 0}] [:b {:x 10 :y 0 :z 0}] [:c {:x 0 :y 10 :z 0}] [:a :b] [:a :c])
-           length-graph
-           (weight-forest 5))))
-  (is (= (algorithm4 (mst loc1) 2 18)
-         (-> (uber/graph [:a {:x 0 :y 0 :z 0}] [:b {:x 36 :y 0 :z 0}] [:c {:x 0 :y 12 :z 0}] [ :d {:x 24 :y 12 :z 0}] [:e {:x 34.392 :y 6 :z 0}] [:a :c] [:d :e] [:b :e])
-             length-graph
-             (weight-forest 2))))
-   (is (= (algorithm4 (mst loc2) 3 21)
-         (-> (uber/graph [:a {:x 0 :y 0 :z 0}] [:b {:x 42 :y 0 :z 0}] [:c {:x 0 :y 21 :z 0}] [:d {:x 42 :y 21 :z 0}] [:a :c] [:b :d])
-  length-graph
-  (weight-forest 3))))
-     (is (= (algorithm4 (mst loc3) 2 21)
-       (-> (uber/graph [:a {:x 0 :y 0 :z 0}] [:b {:x 14 :y 0 :z 0}] [:c {:x 28 :y 0 :z 0}] [:d {:x 0 :y 14 :z 0}] [:e {:x 14 :y 14 :z 0}] [:f {:x 28 :y 14 :z 0}] [:a :b] [:a :d] [:b :c])
-            length-graph
-            (weight-forest 2)))))
+  ;; loc0: comm-range is 5 and budget is 20
+  (let [comm-range 10]
+    (is (= (algorithm4 (init-graph loc0 comm-range) comm-range 20)
+           (testing-graph '([:a {:x 0 :y 0 :z 0}] [:b {:x 10 :y 0 :z 0}] [:c {:x 0 :y 10 :z 0}] [:a :b] [:a :c]) comm-range))))
+  (let [comm-range 12]
+    (is (= (algorithm4 (init-graph loc1 comm-range) comm-range 18)
+           (testing-graph '([:a {:x 0 :y 0 :z 0}] [:b {:x 36 :y 0 :z 0}] [:c {:x 0 :y 12 :z 0}] [ :d {:x 24 :y 12 :z 0}] [:e {:x 34.392 :y 6 :z 0}] [:a :c] [:d :e] [:b :e]) comm-range))))
+  (let [comm-range 21]
+    (is (= (algorithm4 (init-graph loc2 comm-range) comm-range 21)
+           (testing-graph '([:a {:x 0 :y 0 :z 0}] [:b {:x 42 :y 0 :z 0}] [:c {:x 0 :y 21 :z 0}] [:d {:x 42 :y 21 :z 0}] [:a :c] [:b :d]) comm-range))))
+  (let [comm-range 14]
+    (is (= (algorithm4 (init-graph loc3 comm-range) comm-range 21)
+           (testing-graph '([:a {:x 0 :y 0 :z 0}] [:b {:x 14 :y 0 :z 0}] [:c {:x 28 :y 0 :z 0}] [:d {:x 0 :y 14 :z 0}] [:e {:x 14 :y 14 :z 0}] [:f {:x 28 :y 14 :z 0}] [:a :b] [:a :d] [:b :c]) comm-range)))))
 
 ;;(deftest algorithm4-check
    ;;(let [alg41 (algorithm4 (mst loc1) 2 18)
