@@ -191,8 +191,8 @@
   [g e]
   (uber/remove-edges* g [e]))
 
-(defn weight-tree
-  [tree scaling-factor]
+(defn weight-forest
+  [forest scaling-factor]
   (reduce (fn [acc {:keys [src dest]
                     :as   edge}]
             (uber/add-attr acc
@@ -202,8 +202,8 @@
                            (dec (Math/ceil
                                   (/ (edge-value acc edge :length)
                                      scaling-factor)))))
-          tree
-          (uber/edges tree)))
+          forest
+          (uber/edges forest)))
 
 
 ;;; Generate a random graph for testing ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -334,7 +334,7 @@
   Implementation of Kruskal's algorithm."
   [graph]
   (let [disj-set    (ds-from (uber/nodes graph))
-        edges       (sorted-edges graph)
+        edges       (sorted-edges graph :weight)
         empty-graph (uber/remove-edges* graph (uber/edges graph))]
     (ds-with disj-set
              (reduce (fn [acc {:keys [src dest]
@@ -352,9 +352,9 @@
   representing a placement of relay nodes with the minimum number of connected
   components."
   [graph comm-range budget]
-  (let [graph (weight-tree graph comm-range)
+  (let [graph (weight-forest graph comm-range)
         mst   (atom (minimum-spanning-tree graph))]
-    (while (> (total-edge-weight @mst)
+    (while (> (total-edge-weight @mst :weight)
               budget)
       (swap! mst
              remove-edge
@@ -592,14 +592,14 @@
                (induced-subgraph graph))
              minimum-spanning-tree)))
     (filter #(= k (count (uber/nodes %))))
-    (apply min-key total-edge-weight)))
+    (apply min-key total-edge-weight :weight)))
 
 (defn algorithm5
   "Algorithm 5 from the paper. Takes an `uber/graph` and returns an `uber/graph`
   representing the placement of relay nodes with the maximum connected component
   size."
   ([graph comm-range budget]
-   (algorithm5 graph comm-range budget (uber/count-nodes graph)))
+   (algorithm5 (weight-forest graph comm-range) comm-range budget (uber/count-nodes graph)))
   ([graph comm-range budget k]
    (if (<= k 1)
      (print "No such tree could be found! Reached k=1, which has no minimum spanning tree.")
