@@ -11,19 +11,19 @@
            {:id :b :x 36 :y 0 :z 0}
            {:id :c :x 0 :y 12 :z 0}
            {:id :d :x 24 :y 12 :z 0}
-           {:id :e :x 34.392 :y 6 :z 0} ])
+           {:id :e :x 34.392 :y 6 :z 0}])
 
 (def loc2 [{:id :a :x 0 :y 0 :z 0}
            {:id :b :x 42 :y 0 :z 0}
            {:id :c :x 0 :y 21 :z 0}
-           {:id :d :x 42 :y 21 :z 0} ])
+           {:id :d :x 42 :y 21 :z 0}])
 
 (def loc3 [{:id :a :x 0 :y 0 :z 0}
            {:id :b :x 14 :y 0 :z 0}
            {:id :c :x 28 :y 0 :z 0}
            {:id :d :x 0 :y 14 :z 0}
            {:id :e :x 14 :y 14 :z 0}
-           {:id :f :x 28 :y 14 :z 0} ])
+           {:id :f :x 28 :y 14 :z 0}])
 
 (defn mst
   [loc]
