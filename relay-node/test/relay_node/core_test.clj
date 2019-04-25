@@ -99,7 +99,16 @@
    ;;(is (= alg41 15.102))
    ;;(is (= alg42 14))
    ;;(is (= alg43 14))
-  ;; )
+;; )
+
+(defn result
+  [loc comm-range budget]
+  (-> loc
+    init-graph
+    (weight-forest comm-range)
+    (#(do (uber/viz-graph % {:auto-label true}) %))
+    (algorithm4 comm-range budget)
+    (uber/viz-graph {:auto-label true})))
 
 
 (def disjoint (ds-from [:a :b :c]))
