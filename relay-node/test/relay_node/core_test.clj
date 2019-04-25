@@ -60,7 +60,7 @@
 (defn mst
   [loc]
   (-> loc
-    read-in-graph
+    init-graph
     (minimum-spanning-tree :length)))
 
 (defn mst-weight
@@ -70,7 +70,6 @@
     total-edge-weight))
 
 (deftest mst-cal
-<<<<<<< HEAD
   (is (=  54 (Math/round (mst-weight loc1))))
   (is (= 84.0 (mst-weight loc2)))
   (is (=  70.0 (mst-weight loc3))))
@@ -79,11 +78,11 @@
   (is (= (algorithm4 (mst loc0) 5 20)
          (-> (uber/graph [:a {:x 0 :y 0 :z 0}] [:b {:x 10 :y 0 :z 0}] [:c {:x 0 :y 10 :z 0}] [:a :b] [:a :c])
            length-graph
-           (weight-tree 5))))
+           (weight-forest 5))))
   (is (= (algorithm4 (mst loc1) 2 18)
-         (-> uber/graph [:a {:x 0 :y 0 :z 0}] [:b {:x 36 :y 0 :z 0}] [:c {:x 0 :y 12 :z 0}] [ :d {:x 24 :y 12 :z 0}] [:e {:x 34.392 :y 6 :z 0}] [:a :c] [:d :e] [:b :e])
-         length-graph
-         (weight-tree 2))))
+         (-> (uber/graph [:a {:x 0 :y 0 :z 0}] [:b {:x 36 :y 0 :z 0}] [:c {:x 0 :y 12 :z 0}] [ :d {:x 24 :y 12 :z 0}] [:e {:x 34.392 :y 6 :z 0}] [:a :c] [:d :e] [:b :e])
+             length-graph
+             (weight-forest 2)))))
 
 ;;(deftest algorithm4-check
    ;;(let [alg41 (algorithm4 (mst loc1) 2 18)
