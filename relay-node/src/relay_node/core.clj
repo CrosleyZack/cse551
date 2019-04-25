@@ -364,16 +364,16 @@
   representing a placement of relay nodes with the minimum number of connected
   components."
   [graph comm-range budget]
-  ([mst   (atom (-> graph
-                  complete-graph
-                  (weight-forest budget)
-                  minimum-spanning-tree))]
-   (while (> (total-edge-weight @mst :weight)
-             budget)
-     (swap! mst
-            remove-edge
-            (max-edge-by @mst :weight)))
-   @mst))
+  (let [mst (atom (-> graph
+                    complete-graph
+                    (weight-forest budget)
+                    minimum-spanning-tree))]
+    (while (> (total-edge-weight @mst :weight)
+              budget)
+      (swap! mst
+             remove-edge
+             (max-edge-by @mst :weight)))
+    @mst))
 
 ;;;;; Alg5 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
