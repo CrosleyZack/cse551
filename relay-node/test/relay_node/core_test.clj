@@ -70,7 +70,6 @@
     total-edge-weight))
 
 (deftest mst-cal
-<<<<<<< HEAD
   (is (=  54 (Math/round (mst-weight loc1))))
   (is (= 84.0 (mst-weight loc2)))
   (is (=  70.0 (mst-weight loc3))))
