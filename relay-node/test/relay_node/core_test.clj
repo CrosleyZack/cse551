@@ -82,7 +82,15 @@
   (is (= (algorithm4 (mst loc1) 2 18)
          (-> (uber/graph [:a {:x 0 :y 0 :z 0}] [:b {:x 36 :y 0 :z 0}] [:c {:x 0 :y 12 :z 0}] [ :d {:x 24 :y 12 :z 0}] [:e {:x 34.392 :y 6 :z 0}] [:a :c] [:d :e] [:b :e])
              length-graph
-             (weight-forest 2)))))
+             (weight-forest 2))))
+   (is (= (algorithm4 (mst loc2) 3 21)
+         (-> (uber/graph [:a {:x 0 :y 0 :z 0}] [:b {:x 42 :y 0 :z 0}] [:c {:x 0 :y 21 :z 0}] [:d {:x 42 :y 21 :z 0}] [:a :c] [:b :d])
+  length-graph
+  (weight-forest 3))))
+     (is (= (algorithm4 (mst loc3) 2 21)
+       (-> (uber/graph [:a {:x 0 :y 0 :z 0}] [:b {:x 14 :y 0 :z 0}] [:c {:x 28 :y 0 :z 0}] [:d {:x 0 :y 14 :z 0}] [:e {:x 14 :y 14 :z 0}] [:f {:x 28 :y 14 :z 0}] [:a :b] [:a :d] [:b :c])
+            length-graph
+            (weight-forest 2)))))
 
 ;;(deftest algorithm4-check
    ;;(let [alg41 (algorithm4 (mst loc1) 2 18)
