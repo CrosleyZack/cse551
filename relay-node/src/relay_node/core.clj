@@ -226,7 +226,7 @@
 (defn add-all-edges
   "Takes an `uber/graph` and returns an `uber/graph` with edges between all nodes."
   [graph]
-  (add-edges graph (combo/combinations (uber/nodes bare-graph)
+  (add-edges graph (combo/combinations (uber/nodes graph)
                                        2)))
 
 
@@ -296,7 +296,7 @@
 (defn parse-graph
   "Parses a graph from a string with: node lines with an id as well as x, y, and z coordinates separated by spaces; an empty separator line; edge lines with two node ids. Returns a map of with keys nodes, a map of node ids to :x, :y, and :z coordinates, and edges, a seq of 2-element sequences of node ids."
   [graph-str]
-  (let [nodes (map str/split-lines)]
+  (let [nodes (map str/split-lines graph-str)]
     (reduce (fn [acc {:keys [id x y z]
                       :as   node}]
               (assoc acc
