@@ -124,8 +124,8 @@
   [graph edges]
   (reduce (fn [acc edge]
             (uber/add-edges acc edge))
-            graph
-            edges))
+          graph
+          edges))
 
 (defn node-location
   [graph node]
@@ -613,9 +613,9 @@
 (defn graph-execution-times
   [max-nodes max-coords comm-range budget]
   (map #(as-> % $
-              (rand-full-graph $ max-coords)
-              (time (algorithm5 $ comm-range budget)))
-          (range 2 (inc max-nodes))))
+          (rand-full-graph $ max-coords)
+          (time (algorithm5 $ comm-range budget)))
+       (range 2 (inc max-nodes))))
 
 (def cli-options
   "Parse the command line arguments"
