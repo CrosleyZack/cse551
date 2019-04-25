@@ -366,7 +366,7 @@
   [graph comm-range budget]
   (let [mst (atom (-> graph
                     complete-graph
-                    (weight-forest budget)
+                    (weight-forest comm-range)
                     minimum-spanning-tree))]
     (while (> (total-edge-weight @mst :weight)
               budget)
