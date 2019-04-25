@@ -19,9 +19,9 @@
            {:id :d :x 42 :y 21 :z 0}])
 
 (def loc3 [{:id :a :x 0 :y 0 :z 0}
-           {:id :b :x 14 :y 0 :z 0}
-           {:id :c :x 28 :y 0 :z 0}
-           {:id :d :x 0 :y 14 :z 0}
+           {:id :b :x 14 :y 4 :z 0}
+           {:id :c :x 28 :y 6 :z 0}
+           {:id :d :x 33 :y 14 :z 0}
            {:id :e :x 14 :y 14 :z 0}
            {:id :f :x 28 :y 14 :z 0}])
 
@@ -42,7 +42,7 @@
   (is (= 20.0 (mst-weight loc0)))
   (is (=  54 (Math/round (mst-weight loc1))))
   (is (= 84.0 (mst-weight loc2)))
-  (is (=  70.0 (mst-weight loc3))))
+  (is (=  52 (Math/round (mst-weight loc3)))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -56,18 +56,18 @@
 
 (deftest algorithm4-test
   ;; loc0: comm-range is 5 and budget is 20
-  (let [comm-range 10]
-    (is (= (algorithm4 (init-graph loc0 comm-range) comm-range 20)
+  (let [comm-range 5]
+    (is (= (algorithm4 (init-graph loc0) comm-range 2)
            (testing-graph '([:a {:x 0 :y 0 :z 0}] [:b {:x 10 :y 0 :z 0}] [:c {:x 0 :y 10 :z 0}] [:a :b] [:a :c]) comm-range))))
-  (let [comm-range 12]
-    (is (= (algorithm4 (init-graph loc1 comm-range) comm-range 18)
+  (let [comm-range 4]
+    (is (= (algorithm4 (init-graph loc1) comm-range 9)
            (testing-graph '([:a {:x 0 :y 0 :z 0}] [:b {:x 36 :y 0 :z 0}] [:c {:x 0 :y 12 :z 0}] [ :d {:x 24 :y 12 :z 0}] [:e {:x 34.392 :y 6 :z 0}] [:a :c] [:d :e] [:b :e]) comm-range))))
   (let [comm-range 2]
-    (is (= (algorithm4 (init-graph loc2 comm-range) comm-range 35)
+    (is (= (algorithm4 (init-graph loc2) comm-range 35)
            (testing-graph '([:a {:x 0 :y 0 :z 0}] [:b {:x 42 :y 0 :z 0}] [:c {:x 0 :y 21 :z 0}] [:d {:x 42 :y 21 :z 0}] [:a :c] [:b :d]) comm-range))))
-  (let [comm-range 14]
-    (is (= (algorithm4 (init-graph loc3 comm-range) comm-range 21)
-           (testing-graph '([:a {:x 0 :y 0 :z 0}] [:b {:x 14 :y 0 :z 0}] [:c {:x 28 :y 0 :z 0}] [:d {:x 0 :y 14 :z 0}] [:e {:x 14 :y 14 :z 0}] [:f {:x 28 :y 14 :z 0}] [:a :b] [:a :d] [:b :c]) comm-range)))))
+  (let [comm-range 4]
+    (is (= (algorithm4 (init-graph loc3) comm-range 9)
+           (testing-graph '([:a {:x 0 :y 0 :z 0}] [:b {:x 14 :y 4 :z 0}] [:c {:x 28 :y 6 :z 0}] [:d {:x 33 :y 14 :z 0}] [:e {:x 14 :y 14 :z 0}] [:f {:x 28 :y 14 :z 0}] [:a :b] [:b :e] [:f :c] [:f :d]) comm-range)))))
 
 ;;(deftest algorithm4-check
    ;;(let [alg41 (algorithm4 (mst loc1) 2 18)
