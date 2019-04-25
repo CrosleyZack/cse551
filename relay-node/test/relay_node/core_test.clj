@@ -84,9 +84,9 @@
     init-graph
     complete-graph
     (weight-forest comm-range)
-    (#(do (uber/viz-graph % {:auto-label true}) %))
+    (#(do (uber/viz-graph % {:auto-label true :layout :dot}) %))
     (algorithm4 comm-range budget)
-    (uber/viz-graph {:auto-label true})))
+    (uber/viz-graph {:auto-label true :layout :dot})))
 
 
 (def disjoint (ds-from [:a :b :c]))
