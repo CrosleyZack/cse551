@@ -293,42 +293,45 @@
 (defn parse-graph
   "Parses a graph from a string with: node lines with an id as well as x, y, and z coordinates separated by spaces; an empty separator line; edge lines with two node ids. Returns a map of with keys nodes, a map of node ids to :x, :y, and :z coordinates, and edges, a seq of 2-element sequences of node ids."
   [graph-str]
-  (let [[nodes edges] (map str/split-lines
-                           (str/split graph-str #"\n\n"))
-        nodes         (reduce (fn [acc {:keys [id x y z]
-                                        :as   node}]
-                                (assoc acc
-                                       id
-                                       node))
-                              {}
-                              (map parse-node nodes))
-        edges         (map parse-edge edges)]
-    {:nodes nodes
-     :edges edges}))
+  (let [nodes (map str/split-lines)]
+    (reduce (fn [acc {:keys [id x y z]
+                      :as   node}]
+              (assoc acc
+                     id
+                     node))
+            {}
+            (map parse-node nodes))))
 
 
 (defn init-graph
   "Like Max's, but actually works."
-  [{:keys [nodes edges]}]
-  (as-> (keys nodes) $
-    (apply uber/graph $)
-    (locate-nodes $ nodes)
-    (add-edges $ edges)
-    (length-graph $)))
+  [nodes comm-range]
+  (let [bare-graph (locate-nodes (apply uber/graph
+                                        (map (juxt :id #(dissoc % :id))
+                                             nodes))
+                                 nodes)
+        full-graph (length-graph (reduce uber/add-edges
+                                         bare-graph
+                                         (combo/combinations (uber/nodes bare-graph)
+                                                             2)))]
+    (->> full-graph
+      uber/edges
+      (filter #(> (uber/attr full-graph % :length)
+                  comm-range))
+      (uber/remove-edges* full-graph))))
 
 (defn make-graph
-  [graph-str]
+  [graph-str comm-range]
   (-> graph-str
     parse-graph
-    init-graph))
+    (init-graph comm-range)))
 
 (defn read-graph
   "Takes a `str` file location and returns the `uber/graph` specified by the file."
-  [location]
+  [location comm-range]
   (-> location
     slurp
-    make-graph))
-
+    (make-graph comm-range)))
 
 ;;;;; Alg4 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
