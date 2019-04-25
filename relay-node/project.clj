@@ -8,7 +8,8 @@
                  [org.clojure/core.match "0.3.0"]
                  [org.clojure/math.numeric-tower "0.0.4"]
                  [org.clojure/math.combinatorics "0.1.4"]
-                 [org.jordanlewis/data.union-find "0.1.0"]]
+                 [org.jordanlewis/data.union-find "0.1.0"]
+                 [org.clojure/tools.cli "0.4.2"]]
   :main ^:skip-aot relay-node.core
   :target-path "target/%s"
   :profiles {:uberjar {:aot :all}})

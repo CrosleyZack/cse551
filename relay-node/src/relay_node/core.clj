@@ -6,7 +6,8 @@
             [jordanlewis.data.union-find :as uf]
             [clojure.string              :as str]
             [clojure.edn                 :as edn]
-            [clojure.core.match          :refer [match]]))
+            [clojure.core.match          :refer [match]]
+            [clojure.tools.cli :refer [parse-opts]]))
 
 ;;; Non-domain utility functions. ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -17,13 +18,54 @@
 (defn print-lines
   [& lines]
   (doseq [line lines]
-     (apply println line)))
+    (apply println line)))
+
+(defn print-through
+  ([x]
+   (do (println x)
+       x))
+  ([prefix x]
+   (do (println prefix x)
+       x)))
 
 (defn valmap [f m]
   (zipmap (keys m)
           (map f (vals m))))
 
-;;; Utility functions ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn key-intersection
+  [dict1 dict2]
+  (keep #(some->> % (find dict1) key) (keys dict2)))
+
+(defn log2 [n]
+  (/ (Math/log n) (Math/log 2)))
+
+(defn raise-to
+  [pow n]
+  (math/expt n pow))
+
+(def reciprocal (partial / 1))
+
+(defn lp-distance
+  "Takes two number sequences of equal length and produces the euclidean distance"
+  ([point1 point2]
+   (lp-distance point1 point2 2))
+  ([point1 point2 pow]
+   (->> (merge-with - point1 point2)
+     vals
+     (map (partial raise-to pow))
+     (reduce +)
+     (raise-to (reciprocal pow)))))
+
+(defn midpoint
+  [src dst]
+  (valmap #(/ % 2) (merge-with + src dst)))
+
+(defn point-in-square
+  [point top-left-corner bottom-right-corner]
+  (and (<= (:x top-left-corner)     (:x point) (:x bottom-right-corner))
+       (<= (:y bottom-right-corner) (:y point) (:y top-left-corner))))
+
+;;; Set Utility functions ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn ds-from
   "Initialize an atom-backed disjoint set from the given collection."
@@ -74,38 +116,9 @@
                    '[ds-get-canonical
                      ds-shared-root?
                      ds-union])]
-      ~@body))
+     ~@body))
 
-(defn coords-seq
-  [m]
-  ((juxt :x :y :z) m))
-
-(defn raise-to
-  [pow n]
-  (math/expt n pow))
-
-(def reciprocal (partial / 1))
-
-(defn lp-distance
-  "Takes two number sequences of equal length and produces the euclidean distance"
-  ([point1 point2]
-   (lp-distance point1 point2 2))
-  ([point1 point2 pow]
-   (->> (merge-with - point1 point2)
-     vals
-     (map (partial raise-to pow))
-     (reduce +)
-     (raise-to (reciprocal pow)))))
-
-;;; Generate a random graph for testing ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(defn nodes
-  "Returns node names for `int` number of nodes, default 26."
-  ([]
-   (nodes 26))
-  ([n]
-   (map (comp keyword str char)
-        (range 65 (+ 65 n)))))
+;;; Graph Utility functions ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn get-edges
   "Retrieves the edges that exist in a fully connected graph with the set of nodes.
@@ -122,10 +135,9 @@
             graph
             edges))
 
-(defn add-all-edges
-  "Takes an `uber/graph` and returns an `uber/graph` with edges between all nodes."
-  [graph]
-  (add-edges graph (get-edges (uber/nodes graph))))
+(defn node-location
+  [graph node]
+  (uber/attrs graph node))
 
 (defn locate-nodes
   [graph loc-map]
@@ -136,48 +148,14 @@
           graph
           (uber/nodes graph)))
 
-(defn randomly-locate-nodes
-  "Takes an `uber/graph` and an `int` maximum value for axis values and assigns
-  x, y, and z coordinates for each.
-  Z coordinate is initialized to 0 as the points should all be in euclidean plane."
-  [max-coord graph]
-  (->> (reduce (fn [acc node]
-                 (assoc acc
-                        node
-                        {:x (rand max-coord)
-                         :y (rand max-coord)}
-                        :z 0))
-               {}
-               (uber/nodes graph))
-    (locate-nodes graph)))
-
-
-
-(defn length-graph
-  "Takes an `uber/graph` with (X,Y,Z) located nodes an returns an `uber/graph` with
-  length attributes on edges equal to the distance between the two points."
-  [graph]
-  (reduce (fn [acc {:keys [src dest]
-                    :as   edge}]
-            (uber/add-attr acc
-                           src
-                           dest
-                           :length
-                           (lp-distance (uber/attrs graph src) (uber/attrs graph dest))))
-          graph
-          (uber/edges graph)))
-
-(defn rand-full-graph
-  "Create fully connected, random graph with random locations for each node and euclidean graph weights"
-  [num-nodes max-coord]
-  (->> (nodes num-nodes)
-    (apply uber/graph)
-    (add-all-edges)
-    (randomly-locate-nodes max-coord)
-    (length-graph)))
-
-;;; Graph functions ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;; Alg4 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn induced-subgraph
+  [g vertices]
+  (apply uber/graph
+         (->> g
+           uber/edges
+           (filter #(->> %
+                      ((juxt :src :dest))
+                      (every? vertices))))))
 
 (defn unidirectional-edges
   "Gets the unique edges in the graph (removes bidirectional edges)"
@@ -198,11 +176,25 @@
   [graph metric]
   (->> graph
     (unidirectional-edges)
-    (sort #(compare (edge-value graph %1 metric) (edge-value graph %2 metric)))))
+    (sort #(compare (edge-value graph %1 :length) (edge-value graph %2 :length)))))
 
-(defn edge-canonical-form
-  [g edge]
-  ((juxt :src :dest #(uber/attrs g %)) edge))
+(defn total-edge-weight
+  ([g]
+   (total-edge-weight g :length))
+  ([g edge-property]
+   (reduce +
+           (map #(edge-value g % edge-property)
+                (unidirectional-edges g)))))
+
+(defn max-edge-by
+  [g k]
+  (->> g
+    unidirectional-edges
+    (apply max-key #(edge-value g %))))
+
+(defn remove-edge
+  [g e]
+  (uber/remove-edges* g [e]))
 
 (defn weight-tree
   [tree scaling-factor]
@@ -219,25 +211,128 @@
             mst
             (uber/edges mst))))
 
-(defn max-edge-by
-  [g k]
-  (->> g
-    unidirectional-edges
-    (apply max-key #(edge-value g %))))
 
-(defn total-edge-weight
-  ([g]
-   (total-edge-weight g :length))
-  ([g edge-property]
-   (reduce +
-           (map #(edge-value g % edge-property)
-                (unidirectional-edges g)))))
+;;; Generate a random graph for testing ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn remove-edge
-  [g e]
-  (uber/remove-edges* g [e]))
+(defn node-names
+  "Returns node names for `int` number of nodes, default 26."
+  ([]
+   (node-names 26))
+  ([n]
+   (map (comp keyword str char)
+        (range 65 (+ 65 n)))))
 
-;; `TODO` figure out why this is producing bad results - all edges attached to first node.
+(defn add-all-edges
+  "Takes an `uber/graph` and returns an `uber/graph` with edges between all nodes."
+  [graph]
+  (add-edges graph (get-edges (uber/nodes graph))))
+
+
+(defn randomly-locate-nodes
+  "Takes an `uber/graph` and an `int` maximum value for axis values and assigns
+  x, y, and z coordinates for each.
+  Z coordinate is initialized to 0 as the points should all be in euclidean plane."
+  [max-coord graph]
+  (->> (reduce (fn [acc node]
+                 (assoc acc
+                        node
+                        {:x (rand max-coord)
+                         :y (rand max-coord)}
+                        :z 0))
+               {}
+               (uber/nodes graph))
+    (locate-nodes graph)))
+
+(defn length-graph
+  "Takes an `uber/graph` with (X,Y,Z) located nodes an returns an `uber/graph` with
+  length attributes on edges equal to the distance between the two points."
+  [graph]
+  (reduce (fn [acc {:keys [src dest]
+                    :as   edge}]
+            (uber/add-attr acc
+                           src
+                           dest
+                           :length
+                           (lp-distance (uber/attrs graph src) (uber/attrs graph dest))))
+          graph
+          (uber/edges graph)))
+
+(defn rand-full-graph
+  "Create fully connected, random graph with random locations for each node and euclidean graph weights"
+  [num-nodes max-coord]
+  (->> (node-names num-nodes)
+    (apply uber/graph)
+    (add-all-edges)
+    (randomly-locate-nodes max-coord)
+    (length-graph)))
+
+;;; IO Functions ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn tokenize
+  [s]
+  (str/split s #" +"))
+
+(defn parse-node
+  [node-line]
+  (let [[node & coords] (tokenize node-line)
+        [x y z]         (map edn/read-string coords)]
+    {:id (keyword node)
+     :x  x
+     :y  y
+     :z  z}))
+
+(defn parse-edge
+  [edge-line]
+  (let [[a b] (tokenize edge-line)]
+    [(keyword a)
+     (keyword b)]))
+
+(defn parse-graph
+  "Parses a graph from a string with: node lines with an id as well as x, y, and z coordinates separated by spaces; an empty separator line; edge lines with two node ids. Returns a map of with keys nodes, a map of node ids to :x, :y, and :z coordinates, and edges, a seq of 2-element sequences of node ids."
+  [graph-str]
+  (let [[nodes edges] (map str/split-lines
+                           (str/split graph-str #"\n\n"))
+        nodes         (reduce (fn [acc {:keys [id x y z]
+                                        :as   node}]
+                                (assoc acc
+                                       id
+                                       node))
+                              {}
+                              (map parse-node nodes))
+        edges         (map parse-edge edges)]
+    {:nodes nodes
+     :edges edges}))
+
+
+(defn init-graph
+  "Like Max's, but actually works."
+  [{:keys [nodes edges]}]
+  (as-> (keys nodes) $
+    (apply uber/graph $)
+    (locate-nodes $ nodes)
+    (add-edges $ edges)
+    (length-graph $)))
+
+(defn make-graph
+  [graph-str]
+  (-> graph-str
+    parse-graph
+    init-graph))
+
+(defn read-graph
+  "Takes a `str` file location and returns the `uber/graph` specified by the file."
+  [location]
+  (-> location
+    slurp
+    make-graph))
+
+
+;;;;; Alg4 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn edge-canonical-form
+  [g edge]
+  ((juxt :src :dest #(uber/attrs g %)) edge))
+
 (defn minimum-spanning-tree
   "Takes a `uber/graph` and returns an `uber/graph` that is its minimum spanning tree.
   Implementation of Kruskal's algorithm."
@@ -258,78 +353,40 @@
                       empty-graph
                       edges)))))
 
+(defn algorithm4
+  "Algorithm 4 from the paper. Takes an `uber/graph` and returns an `uber/graph`
+  representing a placement of relay nodes with the minimum number of connected
+  components."
+  [graph comm-range budget]
+  (let [graph (weight-tree graph comm-range)
+        mst   (atom (minimum-spanning-tree graph))]
+    (while (> (total-edge-weight @mst)
+              budget)
+      (swap! mst
+             remove-edge
+             (max-edge-by @mst :weight)))
+    @mst))
+
 ;;;;; Alg5 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn node-location
-  [graph node]
-  (uber/attrs graph node))
+(defn four-partitions
+  [n]
+  (for [w     (range (inc n))
+        x     (range (inc n))
+        y     (range (inc n))
+        z     (range (inc n))
+        :when (= n
+                 (+ w x y z))]
+    [w x y z]))
 
-(defn key-intersection
-  [dict1 dict2]
-  (keep #(some->> % (find dict1) key) (keys dict2)))
 
-(defn midpoint
-  [src dst]
-  (valmap #(/ % 2) (merge-with + src dst)))
-
-(defn graph-midpoint
-  [graph src dst]
-  (midpoint
-    (node-location graph src)
-    (node-location graph dst)))
-
-(defn points-in-circle
-  "Takes an `uber/graph` and a `dict` center and `float` diameter for a circle
-  and returns the number of points in the `uber/graph` in that circle."
-  [graph center diameter]
-  (let [c (vals center)]
-   (reduce (fn [count point]
-            (if (<=
-                  (lp-distance c (node-location graph point))
-                  diameter)
-              (inc count)
-              count))
-          (uber/nodes graph))))
-
-(defn clamp
-  [lower upper num]
-  (match ((juxt (partial < lower)
-                (partial > upper))
-          num)
-    [true  true ] num
-    [false _    ] lower
-    [_     false] upper))
-
-;; c^2 = a^2 + b^2 - 2ab * cos(C)
-;; cos(C) = ( c^2 - a^2 - b^2 ) / (-2ab)
-;; C = cos^-1 (( c^2 - a^2 - b^2 ) / (-2ab))
-(defn point-in-square
-  "Takes a `dict` point and two `dict` points indicating opposite square corners.
-  Returns true if the first point is in the square contained in these two points.
-  Checks if the point is contained by square by checking if the angle formed by
-  the three points is at least 90 degrees.
-  NOTE All three points must be in the same plane. If not, this won't produce proper results."
-  [point top-left-corner bottom-right-corner]
-  (let [a (lp-distance point top-left-corner)
-        b (lp-distance point bottom-right-corner)
-        c (lp-distance top-left-corner bottom-right-corner)]
-    (->> (/
-          (- (math/expt c 2) (math/expt a 2) (math/expt b 2))
-          (* -2 a b))
-      (clamp -1 1)
-      (Math/acos)
-      (< (/ Math/PI 2)))))
-
-;; (defn points-in-square
-;;     "Checks how many points fall in this square. An item
-;;   falls in this square if the angle formed by top-left-corner,
-;;   point, and bottom-right-corner is greater than or equal to
-;;   90."
-;;   [graph top-left-corner bottom-right-corner]
-;;   (count (filter #(point-in-square (node-location graph %)
-;;                                    top-left-corner
-;;                                    bottom-right-corner)
-;;                  (uber/nodes graph))))
+(defn points-in-square
+  "Gets the set of all points which are in this square."
+  [graph top-left-corner bottom-right-corner]
+  (filter #(point-in-square (node-location graph %)
+                            top-left-corner
+                            bottom-right-corner)
+          (uber/nodes graph)))
 
 (defn point-exists-in-square
   "returns true the first encounter of a node in the square. Else returns false."
@@ -342,15 +399,60 @@
             bottom-right-corner)
          (map #(node-location graph %) nodes))))
 
+(defn graph-midpoint
+  [graph src dst]
+  (midpoint
+    (node-location graph src)
+    (node-location graph dst)))
+
+(defn points-in-circle
+  "Takes an `uber/graph` and a `dict` center and `float` diameter for a circle
+  and returns the number of points in the `uber/graph` in that circle."
+  [graph center diameter]
+  (let [c (vals center)]
+    (reduce (fn [count point]
+              (if (<=
+                    (lp-distance c (node-location graph point))
+                    diameter)
+                (inc count)
+                count))
+            (uber/nodes graph))))
+
+(defn get-circle
+  ([graph src dst]
+   (get-circle (node-location graph src) (node-location graph dst)))
+  ([src dst]
+   [(midpoint src dst) (* (Math/sqrt 3) (lp-distance src dst))]))
+
+(defn clamp
+  [lower upper num]
+  (match ((juxt (partial < lower)
+                (partial > upper))
+          num)
+         [true  true ] num
+         [false _    ] lower
+         [_     false] upper))
+
 (defn grid-sizes
   "Takes an `int` number of vertices and a `float` edge length to determine the size of a grid edge.
   Lazy sequence produces multiple valid grid sizes which are chosen between.
   This value for grid sizes is under Definition 4.1 on page 4 of the garg paper."
   ([num-vertices edge-length]
-   (grid-sizes num-vertices edge-length 1))
+   (take (Math/ceil (log2 num-vertices)) (grid-sizes num-vertices edge-length 0)))
   ([num-vertices edge-length i]
-   (lazy-seq (cons (* i (/ edge-length num-vertices))
+   (lazy-seq (cons (* (Math/pow 2 i) (/ edge-length num-vertices))
                    (grid-sizes num-vertices edge-length (inc i))))))
+
+(defn get-subcells
+  "Gets the four smaller cells that make up this cell."
+  [top-left bottom-right]
+  (let [size   (/ (- (:x bottom-right) (:x top-left)) 2)
+        points [top-left
+                (merge-with + top-left {:x size})
+                (merge-with + top-left {:y (- size)})
+                (merge-with + top-left {:x size :y (- size)})]]
+    (for [p points]
+      [p (merge-with + {:x size :y (- size)} p)])))
 
 (defn cell-locations
   "Takes a `dict` center, an `int` edge-length, and a `float` grid size and produces top left
@@ -381,193 +483,121 @@
           (delta-merge top-left
                        (gen-deltas :SE i j))])))))
 
-(defn g-potential
-  "takes an `uber/graph`, a `dict` square center, a `float` edge length, and a `float` grid
-  size and produces a g-potential measure.
-  Implementation of `G_i-potential`: Definition 4.1 on page 4 of the garg paper.
-  The stand-in for `i` is the `grid-size`, which is determined by "
-  [graph center edge-length grid-size]
-  (* grid-size
-     ;; Get the number of points in grid that contain a point of `graph`
-     (count (filter (fn [[tl br]] (point-exists-in-square
-                                  graph
-                                  tl
-                                  br))
-                    (cell-locations center edge-length grid-size)))))
+(defn grid-cell-map
+  "Get the root and tree for grid subdivisions."
+  ([k center diameter]
+   (let [[tl br] (first (cell-locations center diameter diameter))]
+     [[tl br] (grid-cell-map center
+                             diameter
+                             (/ diameter k)
+                             tl
+                             br
+                             {})]))
+  ([center diameter lower-bound tl br cell-map]
+   (if (< diameter lower-bound)
+     cell-map
+     (let [subcells (get-subcells tl br)]
+       (assoc (reduce (fn [acc [new-tl new-br]]
+                        (grid-cell-map (midpoint new-tl new-br)
+                                       (/ diameter 2)
+                                       lower-bound
+                                       new-tl
+                                       new-br
+                                       acc))
+                      cell-map
+                      subcells)
+              [tl br]
+              subcells)))))
 
-(defn set-potential
-  "Denoted `P(S)` in the paper on page 4.
-  Takes an `uber/graph` and an `int` k and returns sum of potentials for each grid size.
-  `edge-length` = d(i,j) for the circle formed between i,j with center `center`.
-  k = number of nodes, max-i = number of valid subgrid sizes."
-  [graph center edge-length k]
-  ;; `TODO` is this log or log_10? See Definition 4.2
-  ;; `NOTE` This is `log(k)` instead of `log(k) -1` outlined in the paper. This is
-  ;; because the paper gets the first log(k) items via indexes 0 to log(k)-1. In
-  ;; this implementation we take the first log(k) explicitly.
-  (let [max-i (Math/ceil (Math/log k))]
-    (->> (take max-i (grid-sizes k edge-length))
-      (map #(g-potential graph center k %))
-      (apply +))))
+(defn get-base-potential
+  [{:keys [graph k]} [tl br]]
+  (let [points    (points-in-square graph tl br)
+        m         (count points)
+        remaining (- (inc k) m)
+        x-i       (- (:x br) (:x tl))]
+    (vec (concat [{:potential 0
+                   :points    []}]
+                 (map
+                   #(assoc {:potential x-i}
+                           :points
+                           (take % points))
+                   (range 1 (inc m)))
+                 (take remaining
+                       (repeat {:potential ##Inf
+                                :points    []}))))))
 
-;; (defn min-potential-set
-;;   "Takes an `uber/graph`, a `point` for the center of a square, and a `float` indicating
-;;   the length of a square edge.
-;;   Returns the minimum number of "
-;;   [graph center edge-length]
-;;   (apply min-key
-;;          #(set-potential graph
-;;                            center
-;;                            edge-length
-;;                            %)
-;;            (range 1 (inc (uber/count-nodes graph)))))
+(defn get-base-potentials
+  [{:keys [graph k] :as state} cells potentials]
+  (reduce (fn [acc cell]
+            (assoc acc
+                   cell
+                   (get-base-potential state cell)))
+          potentials
+          cells))
 
-(defn min-potential-set
-  "Get the minimum potential item from the options. Still not sure what this really means...
-  `TODO` Figure out what this really means."
-  [graph center edge-length]
-  (let [k (uber/count-nodes graph)]
-    ;; `TODO` take the output of this reduction and return the one with minimum potential
-    ;; `TODO` this is the wrong way to use take-while....
-    (->> (take-while #(<= % edge-length) (grid-sizes k edge-length))
-         (reduce (fn [acc grid-size]
-                (assoc acc grid-size (g-potential graph center edge-length grid-size)))
-              {})
-         (apply min-key val))))
+(defn potential-from-children
+  [{:keys [graph diameter k]} parent children potentials]
+  (letfn [(combine [& args]
+            (apply (if (sequential? (first args)) concat +)
+                   args))]
+    (into [{:potential 0
+            :points    []}]
+          (map (fn [p]
+                 (->> p
+                   four-partitions
+                   (map (fn [partition]
+                          (->> (map (partial get potentials) children)
+                            (#(map get % partition))
+                            (reduce (partial merge-with combine)))))
+                   (apply min-key :potential)
+                   (#(update % :potential + (math/abs (apply - (map :x parent)))))))
+               (range 1 (inc k))))))
 
-(defn get-mst-option
-  "Takes an `uber/graph`, an `int` k, a source `uber/node` and destination `uber/node` and
-  produces an `uber/graph` minimum spanning tree or `nil`."
-  [graph k src dst]
-  (let [mid      (midpoint src dst)
-        diameter (* (Math/sqrt 3) (lp-distance src dst))]
-    (if (>= (points-in-circle graph mid diameter) k)
-      ;; Suppose a square with side of length `diameter` centered around `mid`
-      (min-potential-set graph mid diameter)
-      ;; `TODO` write this section - get minimum potential set and the accompanying minimum spanning tree as an `uber/graph`.
-      nil)))
+(defn potentials-from-children
+  [{:keys [graph diameter k] :as state} nodes tree potentials]
+  (reduce (fn [acc node]
+            (assoc acc
+                   node
+                   (potential-from-children
+                     state
+                     node
+                     (get tree node)
+                     acc)))
+          potentials
+          nodes))
 
-(defn k-minimum-spanning-tree
-  "Takes a `uber/graph` and an `int` value `k` and returns an `uber/graph` that is the
-  minimum spanning tree with k vertices"
+(defn minpot
+  ([{:keys [graph center diameter k] :as state}]
+   (let [[root tree] (grid-cell-map k
+                                    center
+                                    diameter)]
+     (get (minpot state [root] tree {}) root)))
+  ([{:keys [graph center diameter k] :as state} current-nodes tree potentials]
+   (let [children (reduce (fn [acc node] (into acc (get tree node)))
+                          []
+                          current-nodes)]
+     (if (= 0 (count children))
+       (get-base-potentials state current-nodes potentials)
+       (->> (minpot state children tree potentials)
+         (potentials-from-children state current-nodes tree))))))
+
+
+(defn k-min-spanning-tree
   [graph k]
-  (->> graph
-    (uber/nodes ,,,)
-    (get-edges ,,,)
-    (reduce (fn [acc [src dst]]
-              (let [option (get-mst-option graph k src dst)]
-                (if option
-                  (conj acc option)
-                  acc)))
-            []
-            ,,,)
-    (min-key total-edge-weight ,,,)))
-
-(defn get-circle
-  [src dst]
-  [(midpoint src dst)
-   (* (Math/sqrt 3) (lp-distance src dst))])
-
-;; (defn get-square
-;;   [center edge-length]
-;;   (first (cell-locations center edge-length edge-length)))
-
-;; (defn minpot
-;;   [graph, k]
-;;   )
-
-;; (defn better-k-min-spanning-tree
-;;   [graph k]
-;;   (let [ret {}]
-;;     (for [[src dst] (get-edges (uber/nodes graph))]
-;;       (let [[mid diameter] (get-circle src dst)
-;;           ret {}]
-;;         (if (>= (points-in-circle graph mid diameter) k)
-;;           ;; `TODO` fill in the `,,,` sections.
-;;           (->> (minpot ,,,)
-;;             (minimum-spanning-tree ,,,)
-;;             (assoc ret [src dst])))))
-;;       (min-key ret ,,,,)))
-
-;;; IO Functions ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(defn tokenize
-  [s]
-  (str/split s #" +"))
-
-(defn parse-node
-  [node-line]
-  (let [[node & coords] (tokenize node-line)
-        [x y z]         (map edn/read-string coords)]
-    {:id (keyword node)
-     :x  x
-     :y  y
-     :z  (first-defined z 0)}))
-
-(defn parse-edge
-  [edge-line]
-  (let [[a b] (tokenize edge-line)]
-    [(keyword a)
-     (keyword b)]))
-
-(defn parse-graph
-  "Parses a graph from a string with: node lines with an id as well as x, y, and z coordinates separated by spaces; an empty separator line; edge lines with two node ids. Returns a map of with keys nodes, a map of node ids to :x, :y, and :z coordinates, and edges, a seq of 2-element sequences of node ids."
-  [graph-str]
-  (let [nodes (map str/split-lines)]
-    (reduce (fn [acc {:keys [id x y z]
-                      :as   node}]
-              (assoc acc
-                     id
-                     node))
-            {}
-            (map parse-node nodes))))
-
-
-(defn init-graph
-  "Like Max's, but actually works."
-  [nodes comm-range]
-  (let [bare-graph (locate-nodes (apply uber/graph
-                                        (map (juxt :id #(dissoc % :id))
-                                             nodes))
-                                 nodes)
-        full-graph (length-graph (reduce uber/add-edges
-                                         bare-graph
-                                         (combo/combinations (uber/nodes bare-graph)
-                                                             2)))]
-    (->> full-graph
-      uber/edges
-      (filter #(> (uber/attr full-graph % :length)
-                   comm-range))
-      (uber/remove-edges* full-graph))))
-
-(defn make-graph
-  [graph-str comm-range]
-  (-> graph-str
-    parse-graph
-    (init-graph comm-range)))
-
-(defn read-graph
-  "Takes a `str` file location and returns the `uber/graph` specified by the file."
-  [location comm-range]
-  (-> location
-    slurp
-    (make-graph comm-range)))
-
-;;; Main ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(defn algorithm4
-  "Algorithm 4 from the paper. Takes an `uber/graph` and returns an `uber/graph`
-  representing a placement of relay nodes with the minimum number of connected
-  components."
-  [graph comm-range budget]
-  (let [graph (weight-tree graph comm-range)
-        mst   (atom (minimum-spanning-tree graph))]
-    (while (> (total-edge-weight @mst)
-              budget)
-      (swap! mst
-             remove-edge
-             (max-edge-by @mst :weight)))
-    @mst))
+  (->> (for [[src dst] (get-edges (uber/nodes graph))]
+         (let [[mid diameter] (apply get-circle
+                                     (map (partial node-location graph)
+                                          [src dst]))
+               state          {:graph graph :center mid :diameter diameter :k k}]
+           (-> state
+             minpot
+             (get k)
+             :points
+             (->> (into #{})
+               (induced-subgraph graph))
+             minimum-spanning-tree)))
+    (filter #(= k (count (uber/nodes %))))
+    (apply min-key total-edge-weight)))
 
 (defn algorithm5
   "Algorithm 5 from the paper. Takes an `uber/graph` and returns an `uber/graph`
@@ -576,17 +606,44 @@
   ([graph comm-range budget]
    (algorithm5 graph comm-range budget (uber/count-nodes graph)))
   ([graph comm-range budget k]
-   (let [kmst     (k-minimum-spanning-tree graph k)
-         weighted (weight-tree kmst comm-range)]
-     (if (> (total-edge-weight weighted) budget)
-       weighted
-       (recur graph comm-range budget (dec k))))))
-;; (-> graph
-;;   (k-minimum-spanning-tree k)
-;;   (weight-tree comm-range)
-;;   (if (> (total-edge-weight ))))))
+   (if (<= k 1)
+     (print "No such tree could be found! Reached k=1, which has no minimum spanning tree.")
+     (let [kmst     (k-min-spanning-tree graph k)
+           weighted (weight-tree kmst comm-range)]
+       (if (> (total-edge-weight weighted) budget)
+         (recur graph comm-range budget (dec k))
+         weighted)))))
+
+;;; Main ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn graph-execution-times
+  [max-nodes max-coords comm-range budget]
+  (map #(as-> % $
+              (rand-full-graph $ max-coords)
+              (time (algorithm5 $ comm-range budget)))
+          (range 2 (inc max-nodes))))
+
+(def cli-options
+  "Parse the command line arguments"
+  [;; optional file to read in graph from.
+   ["-f" "--file FILE" "File containing a graph encoding. Optional, as the graph could be passed in as string using `-g`"
+    ;;:parse-fn read-graph
+    ;;:validate [#(.exists (clojure.java.io/as-file %)) "The file specified must exist."]
+    ]
+   ;; optional string graph. TODO does our parse function work here?
+   ["-g" "--graph GRAPH" "String containing a graph encoding. Optional, as the graph could be passed in as a file using `-f`"]
+   ;; Required communications range
+   ["-c" "--comm-range FLOAT" "Required floating point comm range for Algorithm 4 and Algorithm 5."
+    :parse-fn #(Float/parseFloat %)
+    :validate [#(> % 0) "Communication range must be greater than zero."]]
+   ;; Required budget
+   ["-b" "--budget FLOAT" "Required floating point budget for producing sensor placement."
+    :parse-fn #(Float/parseFloat %)
+    :validate [#(> % 0) "Budget must be greater than zero."]]
+   ;; Help
+   ["-h" "--help"]])
 
 (defn -main
   " Read in graphs and run algorithms. "
   [& args]
-  (println "Hello, World!"))
+  (parse-opts args cli-options))
