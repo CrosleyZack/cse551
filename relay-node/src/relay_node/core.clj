@@ -686,12 +686,12 @@
       (print "Errors occurred! Could not run!\n" errors)
       (if graph
         (do
-          (println "\nAlgorithm 4:\n")
+          (println "\n------------------------------------------------\nAlgorithm 4:\n")
           (let [alg4 (algorithm4 graph comm-range budget)]
             (if alg4
               (uber/pprint alg4)
               (println "Could not find a solution to Alg4!")))
-          (println "\nAlgorithm 5:\n")
+          (println "\n------------------------------------------------\nAlgorithm 5:\n")
           (let [alg5 (algorithm5 graph comm-range budget)]
             (if alg5
               (uber/pprint alg5)
