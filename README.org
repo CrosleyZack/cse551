@@ -15,7 +15,7 @@
 ** Execution Instructions
    On execution the program will run both algorithm 4 (Budget Constrained Relay node Placement with Minimum Number of Connected Components) and algorithm 5 (Budget Constrained Relay node Placement with Maximum size of Largest Connected Component) on the parameters provided.
 
-   This package includes the Clojure source code (https://clojure.org/) and a precompiled JAR file. We recommend running the JAR file for simplicity, however the source code can be built using Leiningen (Install from https://leiningen.org/#install) using <[COMPILATION CODE HERE]>. To run the byte code, type <[RUN CODE HERE]> with the interface variables as specified below.
+   This package includes the Clojure source code (https://clojure.org/) and a precompiled JAR file. We recommend running the JAR file for simplicity, however the source code can be built using Leiningen (Install from https://leiningen.org/#install) using <[COMPILATION CODE HERE]>. To run the byte code, type "java -jar NAME.jar -c <#> -b <#> -f <FILE PATH> -g <GRAPH STRING>" with the interface variables as specified below.
 
 ** Command Line Interface
    The command line interface takes a graph, a communication range, and a budget. Please use the sections below for further clarification on the way to specify each parameter. If in doubt, `--help` or `-h` at the prompt will give you a list of all these options.
@@ -35,13 +35,13 @@
 
 **** Communication Range
     Description:  The maximum effective communication range for a sensor in the euclidean plane.
-    Flag:         -c
+    Flag:         -c / --comm-range
     Type:         float
     Type Checked: True
 
 **** Budget
     Description: The maximum budget for the sensor placement spanning tree.
-    Flag:         -b
+    Flag:         -b / --budget
     Type:         float
     Type Checked: True
 
@@ -49,12 +49,14 @@
 
 **** Graph File
     Description: The file from which to load an encoded graph.
-    Flag:         -f
+    Flag:         -f / --file
     Type:         File Path
     Type Checked: True
 
+    * The file method of input is recommended, since newline and space delimited inputs can be finicky on some shells.
+
 **** String Graph
     Description: The encoded graph to load as a string
-    Flag:         -g
+    Flag:         -g / --graph
     Type:         Graph Encoding
     Type Checked: True (During parsing)
