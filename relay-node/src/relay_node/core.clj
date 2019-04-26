@@ -286,7 +286,7 @@
     {:id (keyword node)
      :x  x
      :y  y
-     :z  z}))
+     :z  (first-defined z 0)}))
 
 (defn parse-edge
   [edge-line]
@@ -297,14 +297,7 @@
 (defn parse-graph
   "Parses a graph from a string with: node lines with an id as well as x, y, and z coordinates separated by spaces; an empty separator line; edge lines with two node ids. Returns a map of with keys nodes, a map of node ids to :x, :y, and :z coordinates, and edges, a seq of 2-element sequences of node ids."
   [graph-str]
-  (let [nodes (map str/split-lines graph-str)]
-    (reduce (fn [acc {:keys [id x y z]
-                      :as   node}]
-              (assoc acc
-                     id
-                     node))
-            {}
-            (map parse-node nodes))))
+  (map parse-node (str/split-lines graph-str)))
 
 
 (defn init-graph
@@ -633,20 +626,29 @@
 
 (defn graph-execution-times
   [max-nodes max-coords comm-range budget]
-  (map #(as-> % $
-          (rand-full-graph $ max-coords)
-          (time (algorithm5 $ comm-range budget)))
-       (range 2 (inc max-nodes))))
+  (let [graph (rand-full-graph max-nodes max-coords)]
+    (doall (map (fn [num-nodes]
+                  [num-nodes
+                   (->> (with-out-str
+                          (time
+                            (algorithm5
+                              (uber/remove-nodes* graph
+                                                  (take (- max-nodes num-nodes)
+                                                        (uber/nodes graph)))
+                              comm-range
+                              budget)))
+                     (re-find #"[\d.]+"))])
+                (range 2 (inc max-nodes))))))
 
 (def cli-options
   "Parse the command line arguments"
   [;; optional file to read in graph from.
    ["-f" "--file FILE" "File containing a graph encoding. Optional, as the graph could be passed in as string using `-g`"
-    ;;:parse-fn read-graph
-    ;;:validate [#(.exists (clojure.java.io/as-file %)) "The file specified must exist."]
-    ]
+    :parse-fn read-graph]
+    ;;:parse-fn [#(read-graph %) "The file specified could not be parsed."]]
    ;; optional string graph. TODO does our parse function work here?
-   ["-g" "--graph GRAPH" "String containing a graph encoding. Optional, as the graph could be passed in as a file using `-f`"]
+   ["-g" "--graph GRAPH" "String containing a graph encoding. Optional, as the graph could be passed in as a file using `-f`"
+    :parse-fn make-graph]
    ;; Required communications range
    ["-c" "--comm-range FLOAT" "Required floating point comm range for Algorithm 4 and Algorithm 5."
     :parse-fn #(Float/parseFloat %)
@@ -658,7 +660,25 @@
    ;; Help
    ["-h" "--help"]])
 
+
 (defn -main
   " Read in graphs and run algorithms. "
   [& args]
-  (parse-opts args cli-options))
+  (let [parsed (:options (parse-opts args cli-options))
+        graph (first-defined (:graph parsed) (:file parsed))
+        comm-range (:comm-range parsed)
+        budget (:budget parsed)]
+    (uber/pprint graph)
+    (if graph
+      (do
+        (println "\nAlgorithm 4:\n")
+        (let [alg4 (algorithm4 graph comm-range budget)]
+          (if alg4
+            (uber/pprint alg4)
+            (println "Could not find a solution to Alg4!")))
+        (println "\nAlgorithm 5:\n")
+        (let [alg5 (algorithm5 graph comm-range budget)]
+          (if alg5
+            (uber/pprint alg5)
+            (println "Could not find a solution to Alg5!"))))
+      (println "You must provide a valid graph either via a file or via command line. Enter --help for more details"))))
