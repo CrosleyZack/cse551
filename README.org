@@ -1,27 +1,33 @@
 * Project for CSE 551 Fundamentals of Algorithms
-** Written in Clojure!
-   https://clojure.org/
-** Execution Instructions
-   On execution the program will run both algorithm4 (Budget Constrained Relay node Placement with Minimum Number of Connected Components) and algorithm5 (Budget Constrained Relay node Placement with Maximum size of Largest Connected Component) on the parameters provided.
 
-   `TODO` instructions here.
+** Project Requirements:
+
+   Implement the following algorithms from the paper "Budget Constrained Relay node Place-ment with Minimum Number of Connected Component" (See `papers` directory)
+
+*** Relay Node Placement Problem with Mini-mum Number of Connected Components
+
+    Algorithm 4 in paper.
+
+*** Relay Node Placement Problem for Maximiz-ing the Largest Connected Component
+
+    Algorithm 5 in paper.
+
+** Execution Instructions
+   On execution the program will run both algorithm 4 (Budget Constrained Relay node Placement with Minimum Number of Connected Components) and algorithm 5 (Budget Constrained Relay node Placement with Maximum size of Largest Connected Component) on the parameters provided.
+
+   This package includes the Clojure source code (https://clojure.org/) and a precompiled JAR file. We recommend running the JAR file for simplicity, however the source code can be built using Leiningen (Install from https://leiningen.org/#install) using <[COMPILATION CODE HERE]>. To run the byte code, type <[RUN CODE HERE]> with the interface variables as specified below.
+
 ** Command Line Interface
    The command line interface takes a graph, a communication range, and a budget. Please use the sections below for further clarification on the way to specify each parameter. If in doubt, `--help` or `-h` at the prompt will give you a list of all these options.
 
 *** Graph Encoding
-    The graph is encoded as a string with space and newline delimiters for easy entry.
-    A line specifying a node will have three space-delimited items. The first will be a string node name. This can just be a character like `A`. These names must be unique. The second two parameters will be floating point values indicating the x and y coordinates of this node in the euclidean plane respectively.
-    A line specifying an edge will have two space-delimited items. The first and second will both be string node identifiers. The nodes in the edge must have already been specified using the node specification above. To make a fully connected graph, you may simply enter `SOME STRING` on its own line after all the nodes.
-
-    An example of this specification with three fully connected nodes is as follows:
+    The graph is encoded as a string with space and newline delimiters for easy entry. Each line corresponds to a node in the graph. All edges are inferred from the node locations and the communication range.
+    A line will have three space-delimited items. The first will be a string node name. This can just be a character like `A`, or a valid string. These names must be unique. The second two parameters will be floating point values indicating the x and y coordinates of this node in the euclidean plane respectively. An example of this can be found below. Further examples can be found in the `loc0`, `loc1`, `loc2`, and `loc3` files in the source zipped source.
 
     ```
     a 3.14    0
     b 1       1.618
     c 2.71828 0
-    a b
-    a c
-    b c
     ```
 
 *** Parameters
@@ -39,7 +45,7 @@
     Type:         float
     Type Checked: True
 
-    Additionally, one of the following must be provided:
+  Additionally, one of the following must be provided:
 
 **** Graph File
     Description: The file from which to load an encoded graph.
@@ -52,15 +58,3 @@
     Flag:         -g
     Type:         Graph Encoding
     Type Checked: True (During parsing)
-
-** Requirements:
-
-   Implement the following algorithms from the paper "Budget Constrained Relay node Place-ment with Minimum Number of Connected Component" (See `papers` directory)
-
-*** Relay Node Placement Problem with Mini-mum Number of Connected Components
-
-    Algorithm 4 in paper.
-
-*** Relay Node Placement Problem for Maximiz-ing the Largest Connected Component
-
-    Algorithm 5 in paper.
