@@ -50,24 +50,24 @@ c 2.71828 0
 ** Parameters
 *** Required parameters:
 **** Communication Range
-***** Description:  The maximum effective communication range for a sensor in the euclidean plane.
-*****  Flag:         -c / --comm-range
-*****  Type:         float
-*****  Type Checked: True
+- Description:  The maximum effective communication range for a sensor in the euclidean plane.
+-  Flag:         -c / --comm-range
+-  Type:         float
+-  Type Checked: True
 **** Budget
-***** Description: The maximum budget for the sensor placement spanning tree.
-***** Flag:         -b / --budget
-***** Type:         float
-***** Type Checked: True
+- Description: The maximum budget for the sensor placement spanning tree.
+- Flag:         -b / --budget
+- Type:         float
+- Type Checked: True
 *** Additionally, one of the following must be provided:
 **** Graph File
-***** Description: The file from which to load an encoded graph.
-***** Flag:         -f / --file
-***** Type:         File Path
-***** Type Checked: True
+- Description: The file from which to load an encoded graph.
+- Flag:         -f / --file
+- Type:         File Path
+- Type Checked: True
     * The file method of input is recommended, since newline and space delimited inputs can be finicky on some shells.
 **** String Graph
-***** Description: The encoded graph to load as a string
-***** Flag:         -g / --graph
-***** Type:         Graph Encoding
-***** Type Checked: True (During parsing)
+- Description: The encoded graph to load as a string
+- Flag:         -g / --graph
+- Type:         Graph Encoding
+- Type Checked: True (During parsing)
