@@ -644,11 +644,11 @@
   "Parse the command line arguments"
   [;; optional file to read in graph from.
    ["-f" "--file FILE" "File containing a graph encoding. Optional, as the graph could be passed in as string using `-g`"
-    ;;:parse-fn read-graph
-    ;;:validate [#(.exists (clojure.java.io/as-file %)) "The file specified must exist."]
-    ]
+    :parse-fn read-graph]
+    ;;:parse-fn [#(read-graph %) "The file specified could not be parsed."]]
    ;; optional string graph. TODO does our parse function work here?
-   ["-g" "--graph GRAPH" "String containing a graph encoding. Optional, as the graph could be passed in as a file using `-f`"]
+   ["-g" "--graph GRAPH" "String containing a graph encoding. Optional, as the graph could be passed in as a file using `-f`"
+    :parse-fn make-graph]
    ;; Required communications range
    ["-c" "--comm-range FLOAT" "Required floating point comm range for Algorithm 4 and Algorithm 5."
     :parse-fn #(Float/parseFloat %)
@@ -660,7 +660,25 @@
    ;; Help
    ["-h" "--help"]])
 
+
 (defn -main
   " Read in graphs and run algorithms. "
   [& args]
-  (parse-opts args cli-options))
+  (let [parsed (:options (parse-opts args cli-options))
+        graph (first-defined (:graph parsed) (:file parsed))
+        comm-range (:comm-range parsed)
+        budget (:budget parsed)]
+    (uber/pprint graph)
+    (if graph
+      (do
+        (println "\nAlgorithm 4:\n")
+        (let [alg4 (algorithm4 graph comm-range budget)]
+          (if alg4
+            (uber/pprint alg4)
+            (println "Could not find a solution to Alg4!")))
+        (println "\nAlgorithm 5:\n")
+        (let [alg5 (algorithm5 graph comm-range budget)]
+          (if alg5
+            (uber/pprint alg5)
+            (println "Could not find a solution to Alg5!"))))
+      (println "You must provide a valid graph either via a file or via command line. Enter --help for more details"))))
