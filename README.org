@@ -15,31 +15,31 @@ Algorithm 5 in paper.
 * Execution Instructions
 On execution the program will run both algorithm 4 (Budget Constrained Relay node Placement with Minimum Number of Connected Components) and algorithm 5 (Budget Constrained Relay node Placement with Maximum size of Largest Connected Component) on the parameters provided.
 
-This package includes the Clojure source code (https://clojure.org/) and a precompiled JAR file. We recommend running the JAR file for simplicity, however the source code can be built using Leiningen (Install from https://leiningen.org/#install) using shell command =lein uberjar= in the project directory. To run the byte code, type =java -jar <NAME>.jar -c <#> -b <#> -f <FILE PATH> -g <GRAPH STRING>= in the shell with the interface variables as specified below.
+This package includes the Clojure source code for our project (https://clojure.org/) and a precompiled, standalone JAR file. We recommend running the JAR file for simplicity, however the source code can be built (and dependencies automatically resolved) using Leiningen (Install from https://leiningen.org/#install) using the shell command =lein uberjar= in the project directory (=relay node=). To run the compiled byte code, type =java -jar relay-nodejar -c <#> -b <#> [-f <FILE PATH>] [-g <GRAPH STRING>]= in the shell with the interface variables as specified below.
 
-The project will output the graph for algorithm 4 and algorithm 5. This will be a string encoded graph, to prevent unnecessary dependencies on visualization libraries. The format of this graph will be:
+The project will output the resulting graphs for algorithm 4 and algorithm 5. This will be a serialized representation of these graphs to prevent unnecessary dependencies on visualization libraries. The format of this graph will be:
 
 #+BEGIN_SRC
 Algorithm [4|5]
 
 Graph
 <# of Nodes> Nodes:
-            :<Node Name> {:x <X Coord> :y <Y Coord>}
+            :<Node Name> {:x <X Coord> :y <Y Coord> :z 0}
             ...
 <# of Edges> Edges:
-            :<Node 1 Name> <-> <Node 2 Name> {:length <Euclidean Distance Between Nodes> :weight <Number of Sensors to Traverse>}
-            // indicates Node 1 and Node 2 are connected by some edge.
+            :<Node 1 Name> <-> <Node 2 Name> {:length <Euclidean Distance Between Nodes> :weight <Number of Relays Required to Traverse>}
+            // indicates Node 1 and Node 2 are adjacent in the result graph.
             ...
 #+END_SRC
 
-If a graph meeting specifications could not be found, a message will state as such (Algorithm 5) or an graph with no edges will be displayed (Algorithm 4). Invalid input will be flagged with specific error messages.
+If a graph meeting the desired constraints could not be found, a message will state as such (Algorithm 5) or a graph with no edges will be displayed (Algorithm 4). Invalid input will be flagged with specific error messages.
 
 * Command Line Interface
-The command line interface takes a graph, a communication range, and a budget. Please use the sections below for further clarification on the way to specify each parameter. If in doubt, =--help= or =-h= at the prompt will give you a list of all these options.
+The command line interface takes a graph (filename or string representation), a communication range, and a budget. Please use the sections below for further clarification on the way to specify each parameter. If in doubt, =--help= or =-h= at the prompt will give you a list of all these options.
 
 ** Graph Encoding
 The graph is encoded as a string with space and newline delimiters for easy entry. Each line corresponds to a node in the graph. All edges are inferred from the node locations and the communication range.
-A line will have three space-delimited items. The first will be a string node name. This can just be a character like =A=, or a valid string. These names must be unique. The second two parameters will be floating point values indicating the x and y coordinates of this node in the euclidean plane respectively. An example of this can be found below. Further examples can be found in the =loc0=, =loc1=, =loc2=, and =loc3= files in the source zipped source.
+A line will have three space-delimited items. The first will be a string node name. This can just be a character like =A=, or an ASCII word with no spaces. These names must be unique. The second two parameters will be floating point values indicating the x and y coordinates of this node in the euclidean plane respectively. An example of this can be found below. Further examples can be found in the =loc0=, =loc1=, =loc2=, and =loc3= files in the zipped source.
 
 #+BEGIN_SRC
 a 3.14    0
