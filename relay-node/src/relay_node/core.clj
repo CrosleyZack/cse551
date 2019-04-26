@@ -672,28 +672,38 @@
    ;; Help
    ["-h" "--help"]])
 
+(defmacro aif
+  [cond true-branch false-branch]
+  `(let [~'it ~cond]
+     (if ~'it
+       ~true-branch
+       ~false-branch)))
+
+(def alg4-header "\n------------------------------------------------\nAlgorithm 4 (BCRP-MNCC):\n")
+(def alg4-failure "Could not find a solution to Alg4 meeting the specified constraints!")
+(def alg5-header "\n------------------------------------------------\nAlgorithm 5 (BCRP-MLCC):\n")
+(def alg5-failure "Could not find a solution to Alg5 meeting the specified constraints!")
+
+(defn run-algorithm
+  [f {:keys [graph comm-range budget]} header failure-msg]
+  (println header)
+  (let [res (f graph comm-range budget)]
+    (if res
+      (uber/pprint res)
+      (println failure-msg))))
 
 (defn -main
   " Read in graphs and run algorithms. "
   [& args]
-  (let [parsed (parse-opts args cli-options)
+  (let [parsed  (parse-opts args cli-options)
         options (:options parsed)
-        errors (:errors parsed)
-        graph (first-defined (:graph options) (:file options))
-        comm-range (:comm-range options)
-        budget (:budget options)]
-    (if errors
-      (print "Errors occurred! Could not run!\n" errors)
-      (if graph
-        (do
-          (println "\n------------------------------------------------\nAlgorithm 4:\n")
-          (let [alg4 (algorithm4 graph comm-range budget)]
-            (if alg4
-              (uber/pprint alg4)
-              (println "Could not find a solution to Alg4!")))
-          (println "\n------------------------------------------------\nAlgorithm 5:\n")
-          (let [alg5 (algorithm5 graph comm-range budget)]
-            (if alg5
-              (uber/pprint alg5)
-              (println "Could not find a solution to Alg5!"))))
-        (println "You must provide a valid graph either via a file or via command line. Enter --help for more details")))))
+        options (assoc options :graph (first-defined (:graph options)
+                                                     (:file options)))]
+    (aif (:errors parsed)
+      (print "Errors occurred! Could not run!\n" it)
+      (if (:graph options)
+        (doall (map (partial apply run-algorithm)
+                    [[algorithm4 options alg4-header alg4-failure]
+                     [algorithm5 options alg5-header alg5-failure]]))
+        (println "You must provide a valid graph either via a file or via command line. Enter --help for more details")))
+    (shutdown-agents)))
