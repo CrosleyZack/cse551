@@ -213,6 +213,17 @@
           forest
           (uber/edges forest)))
 
+(defn validate-graph
+  [graph]
+  (assert (uber/ubergraph? graph))
+  (assert (every?
+            #(->> %
+               (uber/attrs graph)
+               vals
+               (not-any? nil?))
+            (uber/nodes graph)))
+  true)
+
 
 ;;; Generate a random graph for testing ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -644,11 +655,12 @@
   "Parse the command line arguments"
   [;; optional file to read in graph from.
    ["-f" "--file FILE" "File containing a graph encoding. Optional, as the graph could be passed in as string using `-g`"
-    :parse-fn read-graph]
-    ;;:parse-fn [#(read-graph %) "The file specified could not be parsed."]]
+    :parse-fn read-graph
+    :validate [validate-graph "The file supplied is not a valid graph!"]]
    ;; optional string graph. TODO does our parse function work here?
    ["-g" "--graph GRAPH" "String containing a graph encoding. Optional, as the graph could be passed in as a file using `-f`"
-    :parse-fn make-graph]
+    :parse-fn make-graph
+    :validate [validate-graph "The graph supplied is not valid!"]]
    ;; Required communications range
    ["-c" "--comm-range FLOAT" "Required floating point comm range for Algorithm 4 and Algorithm 5."
     :parse-fn #(Float/parseFloat %)
@@ -664,21 +676,24 @@
 (defn -main
   " Read in graphs and run algorithms. "
   [& args]
-  (let [parsed (:options (parse-opts args cli-options))
-        graph (first-defined (:graph parsed) (:file parsed))
-        comm-range (:comm-range parsed)
-        budget (:budget parsed)]
-    (uber/pprint graph)
-    (if graph
-      (do
-        (println "\nAlgorithm 4:\n")
-        (let [alg4 (algorithm4 graph comm-range budget)]
-          (if alg4
-            (uber/pprint alg4)
-            (println "Could not find a solution to Alg4!")))
-        (println "\nAlgorithm 5:\n")
-        (let [alg5 (algorithm5 graph comm-range budget)]
-          (if alg5
-            (uber/pprint alg5)
-            (println "Could not find a solution to Alg5!"))))
-      (println "You must provide a valid graph either via a file or via command line. Enter --help for more details"))))
+  (let [parsed (parse-opts args cli-options)
+        options (:options parsed)
+        errors (:errors parsed)
+        graph (first-defined (:graph options) (:file options))
+        comm-range (:comm-range options)
+        budget (:budget options)]
+    (if errors
+      (print "Errors occurred! Could not run!\n" errors)
+      (if graph
+        (do
+          (println "\nAlgorithm 4:\n")
+          (let [alg4 (algorithm4 graph comm-range budget)]
+            (if alg4
+              (uber/pprint alg4)
+              (println "Could not find a solution to Alg4!")))
+          (println "\nAlgorithm 5:\n")
+          (let [alg5 (algorithm5 graph comm-range budget)]
+            (if alg5
+              (uber/pprint alg5)
+              (println "Could not find a solution to Alg5!"))))
+        (println "You must provide a valid graph either via a file or via command line. Enter --help for more details")))))
