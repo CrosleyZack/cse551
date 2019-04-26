@@ -15,7 +15,7 @@ Algorithm 5 in paper.
 * Execution Instructions
 On execution the program will run both algorithm 4 (Budget Constrained Relay node Placement with Minimum Number of Connected Components) and algorithm 5 (Budget Constrained Relay node Placement with Maximum size of Largest Connected Component) on the parameters provided.
 
-This package includes the Clojure source code (https://clojure.org/) and a precompiled JAR file. We recommend running the JAR file for simplicity, however the source code can be built using Leiningen (Install from https://leiningen.org/#install) using =<[COMPILATION CODE HERE]>=. To run the byte code, type =java -jar NAME.jar -c <#> -b <#> -f <FILE PATH> -g <GRAPH STRING>= with the interface variables as specified below.
+This package includes the Clojure source code (https://clojure.org/) and a precompiled JAR file. We recommend running the JAR file for simplicity, however the source code can be built using Leiningen (Install from https://leiningen.org/#install) using shell command =lein uberjar= in the project directly. To run the byte code, type =java -jar <NAME>.jar -c <#> -b <#> -f <FILE PATH> -g <GRAPH STRING>= in the shell with the interface variables as specified below.
 
 The project will output the graph for algorithm 4 and algorithm 5. This will be a string encoded graph, to prevent unnecessary dependencies on visualization libraries. The format of this graph will be:
 
