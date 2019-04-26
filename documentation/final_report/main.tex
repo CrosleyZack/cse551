@@ -251,6 +251,28 @@ The computer removed edge b $\longleftrightarrow$ c and returned the two disconn
 \caption{Bigger Graph BCRP-MNCC Output}
 \end{figure}
 
+Another example is a graph with five nodes which is shown in Figure \ref{loc1-graph}. Additionally, communication range and Budget are respectively four and nine.  In this example, if we apply the minimum spanning tree manually we can say that it will have the following edges:
+\begin{itemize}
+    \item a $\longleftrightarrow$ c (weight 2.0)
+    \item c $\longleftrightarrow$ d (weight 5.0)
+    \item d $\longleftrightarrow$ e (weight 2.0)
+    \item e $\longleftrightarrow$ b (weight 1.0)
+\end{itemize}
+Now, by applying the algorithm 4 it is expected that it removes just the largest weight edge which is c $\longleftrightarrow$ d, because the budget is nine and the total weight is ten. therefore, after removing this edge the total weight will be five, so it should return the tree. In the Figure \ref{loc1-alg4}, which is the output, we can see that the expectation matched. The computer has removed c $\longleftrightarrow$ d and returned two disconnected components.
+ 
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.9\textwidth]{examples/loc1_graph.png}
+\label{loc1-graph}
+\caption{A testing graph example with five nodes}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.9\textwidth]{examples/loc1_alg4.png}
+\label{loc1-alg4}
+\caption{The output of Algorithm 4 for the second testing graph}
+\end{figure}
 
 \subsection{BCRP-MLCC}
 
