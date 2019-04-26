@@ -633,10 +633,19 @@
 
 (defn graph-execution-times
   [max-nodes max-coords comm-range budget]
-  (map #(as-> % $
-          (rand-full-graph $ max-coords)
-          (time (algorithm5 $ comm-range budget)))
-       (range 2 (inc max-nodes))))
+  (let [graph (rand-full-graph max-nodes max-coords)]
+    (doall (map (fn [num-nodes]
+                  [num-nodes
+                   (->> (with-out-str
+                          (time
+                            (algorithm5
+                              (uber/remove-nodes* graph
+                                                  (take (- max-nodes num-nodes)
+                                                        (uber/nodes graph)))
+                              comm-range
+                              budget)))
+                     (re-find #"[\d.]+"))])
+                (range 2 (inc max-nodes))))))
 
 (def cli-options
   "Parse the command line arguments"
