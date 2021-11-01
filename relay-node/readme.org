@@ -1,0 +1,14 @@
+* Details
+This project required the implementation of two algorithms from the “Budget Constrained Relay node Placement with Minimum Number of Connected Component” paper (See =papers= directory).
+
+The idea of the problem is given a set of sensors that need to be networked together for some purpose, what is the best way to connect the sensors such that all sensors are connected at the minimum cost. Nodes can communicate with one another if placed within some distance of another node, but if they are outside of that distance a "relay" node must be added. Relay nodes add cost, thus the goal is to use the minimum number of relay nodes. Ideally one would want to create a connected graph, wich each relay node reachable from any other via a graph walk, but this may not always be feasible. Given a budget of the maximum number of relay nodes, the goal is to maximally connect the relay node graph within that budget or for the minimum cost.
+
+** Budget Constrained Relay node Placement with Minimum Number of Connected Components (BCRP-MNCC)
+
+This algorithm iteratively reduces a minimum spanning tree, trimming edges until the cost is under budget. The minimum spanning tree will connect all nodes for the minimum cost, and by removing the most costly edges we can get the maximally connected relay node graph. The solution will be a forest of connected components that may or may not be disconnected.
+
+** Budget Constrained Relay node Placement with Maximum size of Largest Connected Component (BCRP-MLCC)
+
+The idea of this algorithm is to create a k Minimum Spanning Tree starting from all relay nodes and decreasing to just two relay nodes. The first k-MST which falls under budget is the solution. This produces a fully connected tree of k relay nodes with the rest being completely isolated and disconnected. The k-MST is an NP-Hard problem, so to resolve this we used the algorithm defined by Naveen Garg in "A 3-approximation for the minimum tree spanning k vertices". This implementation was more complicated but significantly faster than others we investigated, making for a more efficient implementation of BCRP-MLCC.
+
+A full write up of our findings can be found in the =documentation/final_report= directory.
