@@ -2,7 +2,7 @@
 
 * Project Requirements:
 
-Implement the following algorithms from the paper "Budget Constrained Relay node Placement with Minimum Number of Connected Component" (See =papers= directory)
+Implement the following algorithms from the paper "Budget Constrained Relay node Placement with Minimum Number of Connected Component" (See =papers= directory). More details on this can be found in the README file in the =relay-node= directory.
 
 ** Relay Node Placement Problem with Mini-mum Number of Connected Components
 
